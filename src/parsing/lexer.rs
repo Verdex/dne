@@ -1,17 +1,65 @@
 
+use std::rc::Rc;
 use std::str::CharIndices;
 use std::iter::Peekable;
 
 type Input<'a> = Peekable<CharIndices<'a>>;
 
-pub enum IrToken {
+pub mod Ir {
+
+    use super::*;
+
+    pub enum Type {
+        Int,
+        Float,
+        String,
+        Bool,
+        Symbol,
+        Ref,
+        Closure,
+        Coroutine,
+    }
+
+    pub enum Token {
+        LParen,
+        RParen,
+        LCurl,
+        RCurl,
+        Comma,
+        SemiColon,
+        Colon,
+        Arrow,
+        Int(i64),
+        Float(f64),
+        Type(Type),
+        Symbol(Rc<str>),
+        // Type?
+        Slot,
+        Proc,
+        Equal,
+        Return,
+        Yield,
+        Resume,
+        Break,
+        CoStart,
+        DynCoStart,
+        Set,
+        Jump,
+        BranchEqual,
+        Global,
+        Call,
+        DynCall,
+        Closure,
+        Cons,
+        Op(Rc<str>),
+    }
+
+    pub fn lex_ir(input : &str) -> Result<Vec<IrToken>, usize> {
+        let mut input = input.char_indices().peekable();
+        todo!()
+    }
 
 }
-
-pub fn lex_ir() -> Result<Vec<IrToken>, usize> {
-    todo!()
-}
-
 
 
 

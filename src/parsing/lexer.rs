@@ -68,6 +68,8 @@ pub mod Ir {
         let mut ret = vec![];
  
         loop {
+            // TODO string
+            // TODO comment
             match input.peek() {
                 None => { return Ok(ret); },
                 Some((_, c)) if c.is_whitespace() => {

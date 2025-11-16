@@ -129,7 +129,6 @@ pub mod Ir {
             s => Ok(Token::Symbol(s.into())),
         }
     }
-
 }
 
 fn whitespace(input : &mut Input) -> Result<(), usize> {

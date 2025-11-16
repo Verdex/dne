@@ -132,11 +132,25 @@ fn whitespace(input : &mut Input) -> Result<(), usize> {
     Ok(())
 }
 
-enum Num { Int(i64), Float(f64) } 
-fn number(input : &mut Input) -> Result<Num, usize> {
-    let i : usize = input.peek().unwrap().0;
+enum Num { Int(i64), Float(f64), Arrow } 
+fn number_or_arrow(input : &mut Input) -> Result<Num, usize> {
+    let (i, c) = *input.peek().unwrap();
+
+    if c == '-' {
+        input.next().unwrap();
+        if matches!( input.peek(), Some((_, '>'))) {
+            input.next().unwrap();
+            return Ok(Num::Arrow);
+        }
+    }
+
     let s = take_until(input, |c| c.is_numeric() || c == '.' || c == '-' || c == 'E' || c == 'e' || c == '+');
-    let s = s.into_iter().collect::<String>();
+    let mut s = s.into_iter().collect::<String>();
+
+    if c == '-' {
+        s.insert(0, '-');
+    }
+
     match s.parse::<i64>() {
         Ok(x) => Ok(Num::Int(x)),
         Err(_) => match s.parse::<f64>() {

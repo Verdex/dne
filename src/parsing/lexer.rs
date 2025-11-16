@@ -76,8 +76,14 @@ pub mod Ir {
                 Some((_, c)) if c.is_alphabetic() || *c == '_' => {
                     ret.push(symbol(&mut input)?);
                 },
-                Some((_, c)) if c.is_numeric() || *c == '-' => { // TODO or arrow
-                    //ret.push(number(&mut input)?);
+                Some((_, c)) if c.is_numeric() || *c == '-' => { 
+                    let x = match number_or_arrow(&mut input)? {
+                        Num::Int(x) => Token::Int(x),
+                        Num::Float(x) => Token::Float(x),
+                        Num::Arrow => Token::Arrow,
+                    };
+
+                    ret.push(x);
                 },
                 /*Some((_, c)) if punct_char(*c) => {
                     //ret.append(&mut punct(&mut input)?);

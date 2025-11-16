@@ -96,7 +96,6 @@ pub mod Ir {
                 Some((i, _)) => { return Err(*i); },
             }
         }
-        todo!()
     }
 
     fn symbol(input : &mut Input) -> Result<Token, usize> {

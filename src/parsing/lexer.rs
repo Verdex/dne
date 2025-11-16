@@ -9,7 +9,8 @@ pub mod Ir {
 
     use super::*;
 
-    pub enum Type {
+    /* TODO
+     * pub enum Type {
         Int,
         Float,
         String,
@@ -18,7 +19,7 @@ pub mod Ir {
         Ref,
         Closure,
         Coroutine,
-    }
+    }*/
 
     pub struct StringSegment {
         s : Rc<str>,

@@ -71,7 +71,7 @@ pub mod Ir {
                     whitespace(&mut input)?;
                 },
                 Some((_, c)) if c.is_alphabetic() || *c == '_' => {
-                    //ret.push(symbol(&mut input)?);
+                    ret.push(symbol(&mut input)?);
                 },
                 Some((_, c)) if c.is_numeric() || *c == '-' => { // TODO or arrow
                     //ret.push(number(&mut input)?);
@@ -83,6 +83,11 @@ pub mod Ir {
             }
         }
         todo!()
+    }
+
+    fn num_or_arrow(input : &mut Input) -> Result<Token, usize> {
+        // TODO need backtrack
+        // check arrow
     }
 
     fn symbol(input : &mut Input) -> Result<Token, usize> {
@@ -119,6 +124,20 @@ fn whitespace(input : &mut Input) -> Result<(), usize> {
     Ok(())
 }
 
+enum Num { Int(i64), Float(f64) } 
+fn number(input : &mut Input) -> Result<Num, usize> {
+    let i : usize = input.peek().unwrap().0;
+    let s = take_until(input, |c| c.is_numeric() || c == '.' || c == '-' || c == 'E' || c == 'e' || c == '+');
+    let s = s.into_iter().collect::<String>();
+    match s.parse::<i64>() {
+        Ok(x) => Ok(Num::Int(x)),
+        Err(_) => match s.parse::<f64>() {
+            Ok(x) => Ok(Num::Float(x)),
+            Err(_) => Err(i),
+        },
+    }
+}
+
 // Note:  Only call this function when you know the first char is what you want
 fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<char> {
     let mut ret = vec![input.next().unwrap().1];
@@ -135,30 +154,3 @@ fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<cha
     }
 }
 
-
-/*
- * global name = lit;
- *
- *  proc name(a : T, ..) -> T {
- *      set name : T = expr;
- *      jump label_name;
- *      bz label_name var;
- *      yield var;
- *      resume var;
- *      label name;
- *      return var; 
- *  }
- *
- *
- * lit = int | float | string
- *
- *  expr = lit
- *       | var
- *       | call name (var, ...)
- *       | dyn_call var(var, ...)
- *
- * // TODO: syntax for calling a coroutine, dynamic coroutine, and closure
- *  
- *
- *
- */

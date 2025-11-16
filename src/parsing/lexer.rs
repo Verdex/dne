@@ -85,9 +85,14 @@ pub mod Ir {
 
                     ret.push(x);
                 },
-                /*Some((_, c)) if punct_char(*c) => {
-                    //ret.append(&mut punct(&mut input)?);
-                },*/
+                Some((_, '(')) => { ret.push(Token::LParen); },
+                Some((_, ')')) => { ret.push(Token::RParen); },
+                Some((_, '{')) => { ret.push(Token::LCurl); },
+                Some((_, '}')) => { ret.push(Token::RCurl); },
+                Some((_, ',')) => { ret.push(Token::Comma); },
+                Some((_, ';')) => { ret.push(Token::SemiColon); },
+                Some((_, ':')) => { ret.push(Token::Colon); },
+                Some((_, '=')) => { ret.push(Token::Equal); },
                 Some((i, _)) => { return Err(*i); },
             }
         }

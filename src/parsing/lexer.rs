@@ -20,6 +20,11 @@ pub mod Ir {
         Coroutine,
     }
 
+    pub struct StringSegment {
+        s : Rc<str>,
+        var : Option<Rc<str>>,
+    }
+
     pub enum Token {
         LParen,
         RParen,
@@ -29,20 +34,21 @@ pub mod Ir {
         SemiColon,
         Colon,
         Arrow,
+        Equal,
         Int(i64),
         Float(f64),
         Type(Type),
         Symbol(Rc<str>),
-        // Type?
+        String(Vec<StringSegment>),
+        GetType,
         Slot,
         Proc,
-        Equal,
         Return,
         Yield,
         Resume,
         Break,
-        CoStart,
-        DynCoStart,
+        Coroutine,
+        DynCoroutine,
         Set,
         Jump,
         BranchEqual,
@@ -51,16 +57,83 @@ pub mod Ir {
         DynCall,
         Closure,
         Cons,
-        Op(Rc<str>),
+        // TODO ? Op(Rc<str>),
     }
 
-    pub fn lex_ir(input : &str) -> Result<Vec<IrToken>, usize> {
+    pub fn lex(input : &str) -> Result<Vec<Token>, usize> {
         let mut input = input.char_indices().peekable();
+        let mut ret = vec![];
+ 
+        loop {
+            match input.peek() {
+                None => { return Ok(ret); },
+                Some((_, c)) if c.is_whitespace() => {
+                    whitespace(&mut input)?;
+                },
+                Some((_, c)) if c.is_alphabetic() || *c == '_' => {
+                    //ret.push(symbol(&mut input)?);
+                },
+                Some((_, c)) if c.is_numeric() || *c == '-' => { // TODO or arrow
+                    //ret.push(number(&mut input)?);
+                },
+                /*Some((_, c)) if punct_char(*c) => {
+                    //ret.append(&mut punct(&mut input)?);
+                },*/
+                Some((i, _)) => { return Err(*i); },
+            }
+        }
         todo!()
+    }
+
+    fn symbol(input : &mut Input) -> Result<Token, usize> {
+        let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
+        let s = s.into_iter().collect::<String>();
+
+        match s.as_str() {
+            "type" => Ok(Token::GetType),
+            "slot" => Ok(Token::Slot),
+            "proc" => Ok(Token::Proc),
+            "return" =>  Ok(Token::Return),
+            "yield" =>  Ok(Token::Yield),
+            "resume" =>  Ok(Token::Resume),
+            "break" =>  Ok(Token::Break),
+            "coroutine" =>  Ok(Token::Coroutine),
+            "dyn_coroutine" =>  Ok(Token::DynCoroutine),
+            "set" =>  Ok(Token::Set),
+            "jump" =>  Ok(Token::Jump),
+            "branch_equal" =>  Ok(Token::BranchEqual),
+            "global" =>  Ok(Token::Global),
+            "call" =>  Ok(Token::Call),
+            "dyn_call" =>  Ok(Token::DynCall),
+            "closure" =>  Ok(Token::Closure),
+            s => Ok(Token::Symbol(s.into())),
+        }
     }
 
 }
 
+fn whitespace(input : &mut Input) -> Result<(), usize> {
+    while let Some((_, c)) = input.peek() && c.is_whitespace() {
+        input.next().unwrap();
+    }
+    Ok(())
+}
+
+// Note:  Only call this function when you know the first char is what you want
+fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<char> {
+    let mut ret = vec![input.next().unwrap().1];
+
+    loop {
+        match input.peek() {
+            Some((_, c)) if p(*c) => {
+                ret.push(*c);
+                input.next().unwrap();
+            },
+            Some(_) => { return ret; },
+            None => { return ret; },
+        }
+    }
+}
 
 
 /*

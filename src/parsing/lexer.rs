@@ -37,10 +37,9 @@ pub mod Ir {
         Equal,
         Int(i64),
         Float(f64),
-        Type(Type),
         Symbol(Rc<str>),
         String(Vec<StringSegment>),
-        GetType,
+        Type,
         Slot,
         SlotSet,
         SlotAdd,
@@ -89,17 +88,12 @@ pub mod Ir {
         todo!()
     }
 
-    fn num_or_arrow(input : &mut Input) -> Result<Token, usize> {
-        // TODO need backtrack
-        // check arrow
-    }
-
     fn symbol(input : &mut Input) -> Result<Token, usize> {
         let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
         let s = s.into_iter().collect::<String>();
 
         match s.as_str() {
-            "type" => Ok(Token::GetType),
+            "type" => Ok(Token::Type),
             "slot" => Ok(Token::Slot),
             "slot_set" => Ok(Token::SlotSet),
             "slot_add" => Ok(Token::SlotAdd),

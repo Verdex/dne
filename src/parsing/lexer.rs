@@ -5,7 +5,7 @@ use std::iter::Peekable;
 
 type Input<'a> = Peekable<CharIndices<'a>>;
 
-pub mod Ir {
+pub mod ir {
 
     use super::*;
 

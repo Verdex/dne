@@ -21,11 +21,13 @@ pub mod ir {
         Coroutine,
     }*/
 
+    #[derive(Debug, PartialEq)]
     pub struct StringSegment {
         s : Rc<str>,
         var : Option<Rc<str>>,
     }
 
+    #[derive(Debug, PartialEq)]
     pub enum Token {
         LParen,
         RParen,
@@ -62,6 +64,15 @@ pub mod ir {
         Closure,
         Cons,
         // TODO ? Op(Rc<str>),
+    }
+
+    impl Token {
+        pub fn value(&self) -> Rc<str> {
+            match self {
+                Token::Symbol(x) => Rc::clone(x),
+                x => panic!("value called on {:?}", x),
+            }
+        }
     }
 
     pub fn lex(input : &str) -> Result<Vec<Token>, usize> {

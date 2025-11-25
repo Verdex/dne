@@ -83,5 +83,16 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 }
 
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
-    todo!()
+    let t = input.expect(|x| matches!(x, Token::Symbol(_)))?.value();
+    match &*t {
+        "Int" => Ok(Type::Int),
+        "Float" => Ok(Type::Float),
+        "String" => Ok(Type::String),
+        "Bool" => Ok(Type::Bool),
+        "Symbol" => Ok(Type::Symbol),
+        "Ref" => Ok(Type::Ref),
+        "Closure" => Ok(Type::Closure),
+        "Coroutine" => Ok(Type::Coroutine),
+        _ => Err(ParseError::Fatal),
+    }
 }

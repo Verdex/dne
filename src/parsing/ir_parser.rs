@@ -2,11 +2,26 @@
 use super::lexer::ir;
 use super::parse_input::Input;
 
+#[derive(Debug)]
 pub enum ParseError {
     Lex(usize),
     Fatal,
     Eof,
 }
+
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
+        // TODO 
+        match self { 
+            _ => write!(f, ""),
+        }
+    }
+}
+
+impl std::error::Error for ParseError { }
+
+
 
 pub enum Top {
     Global,

@@ -9,18 +9,6 @@ pub mod ir {
 
     use super::*;
 
-    /* TODO
-     * pub enum Type {
-        Int,
-        Float,
-        String,
-        Bool,
-        Symbol,
-        Ref,
-        Closure,
-        Coroutine,
-    }*/
-
     #[derive(Debug, PartialEq)]
     pub struct StringSegment {
         s : Rc<str>,

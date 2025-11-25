@@ -28,7 +28,18 @@ pub enum Top {
 }
 
 pub enum Stmt {
-    Set { var: Rc<str>, val: Expr }
+    Set { var: Rc<str>, ttype : Type, val: Expr }
+}
+
+pub enum Type {
+    Int,
+    Float,
+    String,
+    Bool,
+    Symbol,
+    Ref,
+    Closure,
+    Coroutine,
 }
 
 pub enum Expr { 
@@ -58,13 +69,19 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
 }
 
 fn parse_set(input : &mut Input) -> Result<Stmt, ParseError> {
-    let var = input.expect(|l| matches!(l, Token::Symbol(_)))?;
-    //input.expect(|l| matches!(l, Token::Equal))?;
+    let var = input.expect(|x| matches!(x, Token::Symbol(_)))?;
+    input.expect(|x| x.eq(&Token::Colon))?;
+    let ttype = parse_type(input)?;
+    input.expect(|x| x.eq(&Token::Equal))?;
     let val = parse_expr(input)?;
-    //input.expect(|l| l.eq(&Token::SemiColon))?;
-    Ok(Stmt::Set { var: var.value(), val })
+    input.expect(|x| x.eq(&Token::SemiColon))?;
+    Ok(Stmt::Set { var: var.value(), val, ttype })
 }
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
+    todo!()
+}
+
+fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
     todo!()
 }

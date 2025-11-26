@@ -63,6 +63,10 @@ pub enum Expr {
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
     Closure { name : Rc<str>, params : Vec<Rc<str>> },
     Cons { name : Rc<str>, params : Vec<Rc<str>> },
+    Resume(Rc<str>),
+    Length(Rc<str>),
+    Type(Rc<str>),
+    Var(Rc<str>),
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
@@ -139,6 +143,11 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         Ok(Expr::Lit(Lit::Float(x)))
     }
     // TODO bool
+    else if let Token::Symbol(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Expr::Var(x))
+    }
     else if input.check(|x| x.eq(&Token::Call))? {
         let name = expect_sym(input)?;
         let params = expect_params(input)?;
@@ -169,12 +178,18 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let params = expect_params(input)?;
         Ok(Expr::Cons { name, params })
     }
-    // TODO var
-    // TODO type
+    else if input.check(|x| x.eq(&Token::Resume))? {
+        Ok(Expr::Resume(expect_sym(input)?)) 
+    }
+    else if input.check(|x| x.eq(&Token::Length))? {
+        Ok(Expr::Length(expect_sym(input)?)) 
+    }
+    else if input.check(|x| x.eq(&Token::Type))? {
+        Ok(Expr::Type(expect_sym(input)?)) 
+    }
     // TODO slot
     // TODO insert slot
     // TODO remove slot
-    // TODO len
     else {
         Err(ParseError::Fatal)
     }

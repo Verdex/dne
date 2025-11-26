@@ -48,8 +48,20 @@ pub enum Type {
     Coroutine,
 }
 
-pub enum Expr { 
+pub enum Lit {
+    Int(i64),
+    Float(f64),
+    // TODO string
+}
 
+pub enum Expr { 
+    Lit(Lit), 
+    Call { name : Rc<str>, params : Vec<Rc<str>> },
+    DynCall { name : Rc<str>, params : Vec<Rc<str>> },
+    Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
+    DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
+    Closure { name : Rc<str>, params : Vec<Rc<str>> },
+    Cons { name : Rc<str>, params : Vec<Rc<str>> },
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
@@ -115,7 +127,49 @@ fn parse_set(input : &mut Input) -> Result<Stmt, ParseError> {
 }
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
-    todo!()
+    if let Token::Int(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Expr::Lit(Lit::Int(x)))
+    }
+    else if let Token::Float(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Expr::Lit(Lit::Float(x)))
+    }
+    else if input.check(|x| x.eq(&Token::Call))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::Call { name, params })
+    }
+    else if input.check(|x| x.eq(&Token::DynCall))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::DynCall { name, params })
+    }
+    else if input.check(|x| x.eq(&Token::Coroutine))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::Coroutine { name, params })
+    }
+    else if input.check(|x| x.eq(&Token::DynCoroutine))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::DynCoroutine { name, params })
+    }
+    else if input.check(|x| x.eq(&Token::Closure))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::Closure { name, params })
+    }
+    else if input.check(|x| x.eq(&Token::Cons))? {
+        let name = expect_sym(input)?;
+        let params = expect_params(input)?;
+        Ok(Expr::Cons { name, params })
+    }
+    else {
+        Err(ParseError::Fatal)
+    }
 }
 
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
@@ -135,4 +189,17 @@ fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
 
 fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
     Ok(input.expect(|x| matches!(x, Token::Symbol(_)))?.value())
+}
+
+fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
+    input.expect(|x| x.eq(&Token::LParen))?;
+    let mut ret = vec![];
+    loop {
+        ret.push(expect_sym(input)?);
+        if input.check(|x| x.eq(&Token::Comma))? {
+            break;
+        }
+    }
+    input.expect(|x| x.eq(&Token::RParen))?;
+    Ok(ret)
 }

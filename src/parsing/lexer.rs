@@ -56,9 +56,13 @@ pub mod ir {
         // TODO ? Op(Rc<str>),
     }
 
-    pub fn lex(input : &str) -> Result<Vec<Token>, usize> {
+    pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {
+        macro_rules! punct {
+            ($input:ident, $ret:ident, $i:ident, $t:expr) => { { let i = *$i; $input.next().unwrap(); $ret.push(($t, i, i)); } }
+        };
+
         let mut input = input.char_indices().peekable();
-        let mut ret = vec![];
+        let mut ret : Vec<(Token, usize, usize)> = vec![];
  
         loop {
             // TODO string
@@ -68,61 +72,68 @@ pub mod ir {
                 Some((_, c)) if c.is_whitespace() => {
                     whitespace(&mut input)?;
                 },
-                Some((_, c)) if c.is_alphabetic() || *c == '_' => {
-                    ret.push(symbol(&mut input)?);
+                Some((s, c)) if c.is_alphabetic() || *c == '_' => {
+                    let s = *s;
+                    let (t, e) = symbol(&mut input)?;
+                    ret.push((t, s, e));
                 },
-                Some((_, c)) if c.is_numeric() || *c == '-' => { 
-                    let x = match number_or_arrow(&mut input)? {
+                Some((s, c)) if c.is_numeric() || *c == '-' => { 
+                    let s = *s;
+                    let (x, e) = number_or_arrow(&mut input)?;
+                    let x = match x {
                         Num::Int(x) => Token::Int(x),
                         Num::Float(x) => Token::Float(x),
                         Num::Arrow => Token::Arrow,
                     };
 
-                    ret.push(x);
+                    ret.push((x, s, e));
                 },
-                Some((_, '(')) => { input.next().unwrap(); ret.push(Token::LParen); },
-                Some((_, ')')) => { input.next().unwrap(); ret.push(Token::RParen); },
-                Some((_, '{')) => { input.next().unwrap(); ret.push(Token::LCurl); },
-                Some((_, '}')) => { input.next().unwrap(); ret.push(Token::RCurl); },
-                Some((_, ',')) => { input.next().unwrap(); ret.push(Token::Comma); },
-                Some((_, ';')) => { input.next().unwrap(); ret.push(Token::SemiColon); },
-                Some((_, ':')) => { input.next().unwrap(); ret.push(Token::Colon); },
-                Some((_, '=')) => { input.next().unwrap(); ret.push(Token::Equal); },
+                Some((i, '(')) => punct!(input, ret, i, Token::LParen),
+                Some((i, ')')) => punct!(input, ret, i, Token::RParen), 
+                Some((i, '{')) => punct!(input, ret, i, Token::LCurl), 
+                Some((i, '}')) => punct!(input, ret, i, Token::RCurl), 
+                Some((i, ',')) => punct!(input, ret, i, Token::Comma),
+                Some((i, ';')) => punct!(input, ret, i, Token::SemiColon),
+                Some((i, ':')) => punct!(input, ret, i, Token::Colon), 
+                Some((i, '=')) => punct!(input, ret, i, Token::Equal), 
                 Some((i, _)) => { return Err(*i); },
             }
         }
     }
 
-    fn symbol(input : &mut Input) -> Result<Token, usize> {
+    fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {
         let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
         let s = s.into_iter().collect::<String>();
+        let end = s.len() - 1;
 
-        match s.as_str() {
-            "type" => Ok(Token::Type),
-            "slot" => Ok(Token::Slot),
-            "slot_set" => Ok(Token::SlotSet),
-            "slot_insert" => Ok(Token::SlotInsert),
-            "slot_remove" => Ok(Token::SlotRemove),
-            "length" => Ok(Token::Length),
-            "proc" => Ok(Token::Proc),
-            "return" =>  Ok(Token::Return),
-            "yield" =>  Ok(Token::Yield),
-            "resume" =>  Ok(Token::Resume),
-            "break" =>  Ok(Token::Break),
-            "coroutine" =>  Ok(Token::Coroutine),
-            "dyn_coroutine" =>  Ok(Token::DynCoroutine),
-            "set" =>  Ok(Token::Set),
-            "jump" =>  Ok(Token::Jump),
-            "label" => Ok(Token::Label),
-            "branch_equal" =>  Ok(Token::BranchEqual),
-            "global" =>  Ok(Token::Global),
-            "call" =>  Ok(Token::Call),
-            "dyn_call" =>  Ok(Token::DynCall),
-            "closure" =>  Ok(Token::Closure),
-            "true" => Ok(Token::Bool(true)),
-            "false" => Ok(Token::Bool(false)),
-            s => Ok(Token::Symbol(s.into())),
-        }
+        let r = match s.as_str() {
+            "type" => Token::Type,
+            "slot" => Token::Slot,
+            "slot_set" => Token::SlotSet,
+            "slot_insert" => Token::SlotInsert,
+            "slot_remove" => Token::SlotRemove,
+            "length" => Token::Length,
+            "proc" => Token::Proc,
+            "return" => Token::Return,
+            "yield" => Token::Yield,
+            "resume" => Token::Resume,
+            "break" => Token::Break,
+            "coroutine" => Token::Coroutine,
+            "dyn_coroutine" => Token::DynCoroutine,
+            "set" => Token::Set,
+            "jump" => Token::Jump,
+            "label" => Token::Label,
+            "branch_equal" => Token::BranchEqual,
+            "global" => Token::Global,
+            "call" => Token::Call,
+            "dyn_call" => Token::DynCall,
+            "closure" => Token::Closure,
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
+            s => Token::Symbol(s.into()),
+        };
+
+        Ok((r, end))
     }
 }
 
@@ -134,14 +145,14 @@ fn whitespace(input : &mut Input) -> Result<(), usize> {
 }
 
 enum Num { Int(i64), Float(f64), Arrow } 
-fn number_or_arrow(input : &mut Input) -> Result<Num, usize> {
+fn number_or_arrow(input : &mut Input) -> Result<(Num, usize), usize> {
     let (i, c) = *input.peek().unwrap();
 
     if c == '-' {
         input.next().unwrap();
         if matches!( input.peek(), Some((_, '>'))) {
             input.next().unwrap();
-            return Ok(Num::Arrow);
+            return Ok((Num::Arrow, i + 1));
         }
     }
 
@@ -152,10 +163,12 @@ fn number_or_arrow(input : &mut Input) -> Result<Num, usize> {
         s.insert(0, '-');
     }
 
+    let end = s.len() - 1;
+
     match s.parse::<i64>() {
-        Ok(x) => Ok(Num::Int(x)),
+        Ok(x) => Ok((Num::Int(x), end)),
         Err(_) => match s.parse::<f64>() {
-            Ok(x) => Ok(Num::Float(x)),
+            Ok(x) => Ok((Num::Float(x), end)),
             Err(_) => Err(i),
         },
     }

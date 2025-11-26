@@ -28,7 +28,11 @@ pub enum Top {
 }
 
 pub enum Stmt {
-    Set { var: Rc<str>, ttype : Type, val: Expr }
+    Set { var: Rc<str>, ttype : Type, val: Expr },
+    Jump(Rc<str>),
+    Return(Rc<str>),
+    Yield(Rc<str>),
+    Label(Rc<str>),
 }
 
 pub enum Type {
@@ -59,8 +63,28 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
 fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
     let mut ret = vec![];
     loop {
-        if input.check(|l| l.eq(&Token::Set))? {
+        if input.check(|x| x.eq(&Token::Set))? {
             ret.push(parse_set(input)?);
+        }
+        else if input.check(|x| x.eq(&Token::Jump))? {
+            let r = expect_var(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::Jump(r));
+        }
+        else if input.check(|x| x.eq(&Token::Return))? {
+            let r = expect_var(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::Return(r));
+        }
+        else if input.check(|x| x.eq(&Token::Yield))? {
+            let r = expect_var(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::Yield(r));
+        }
+        else if input.check(|x| x.eq(&Token::Label))? {
+            let r = expect_var(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::Label(r));
         }
         else {
             return Ok(ret);
@@ -95,4 +119,8 @@ fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
         "Coroutine" => Ok(Type::Coroutine),
         _ => Err(ParseError::Fatal),
     }
+}
+
+fn expect_var(input : &mut Input) -> Result<Rc<str>, ParseError> {
+    Ok(input.expect(|x| matches!(x, Token::Symbol(_)))?.value())
 }

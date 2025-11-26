@@ -67,22 +67,22 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
             ret.push(parse_set(input)?);
         }
         else if input.check(|x| x.eq(&Token::Jump))? {
-            let r = expect_var(input)?;
+            let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Jump(r));
         }
         else if input.check(|x| x.eq(&Token::Return))? {
-            let r = expect_var(input)?;
+            let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Return(r));
         }
         else if input.check(|x| x.eq(&Token::Yield))? {
-            let r = expect_var(input)?;
+            let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Yield(r));
         }
         else if input.check(|x| x.eq(&Token::Label))? {
-            let r = expect_var(input)?;
+            let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Label(r));
         }
@@ -121,6 +121,6 @@ fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
     }
 }
 
-fn expect_var(input : &mut Input) -> Result<Rc<str>, ParseError> {
+fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
     Ok(input.expect(|x| matches!(x, Token::Symbol(_)))?.value())
 }

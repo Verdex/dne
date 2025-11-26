@@ -51,7 +51,7 @@ pub enum Type {
 pub enum Lit {
     Int(i64),
     Float(f64),
-    // TODO bool
+    Bool(bool),
     // TODO string
 }
 
@@ -195,7 +195,11 @@ fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
         input.take()?;
         Ok(Lit::Float(x))
     }
-    // TODO bool
+    else if let Token::Bool(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Lit::Bool(x))
+    }
     else {
         Err(ParseError::Fatal)
     }
@@ -212,7 +216,11 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         input.take()?;
         Ok(Expr::Lit(Lit::Float(x)))
     }
-    // TODO bool
+    else if let Token::Bool(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Expr::Lit(Lit::Bool(x)))
+    }
     else if let Token::Symbol(x) = input.peek()? {
         let x = Rc::clone(x);
         input.take()?;

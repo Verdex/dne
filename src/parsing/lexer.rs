@@ -28,7 +28,7 @@ pub mod ir {
         Equal,
         Int(i64),
         Float(f64),
-        // TODO bool 
+        Bool(bool),
         Symbol(Rc<str>),
         String(Vec<StringSegment>),
         Type,
@@ -128,6 +128,8 @@ pub mod ir {
             "call" =>  Ok(Token::Call),
             "dyn_call" =>  Ok(Token::DynCall),
             "closure" =>  Ok(Token::Closure),
+            "true" => Ok(Token::Bool(true)),
+            "false" => Ok(Token::Bool(false)),
             s => Ok(Token::Symbol(s.into())),
         }
     }

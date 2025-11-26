@@ -341,3 +341,24 @@ fn expect_index(input : &mut Input) -> Result<usize, ParseError> {
         Err(ParseError::Fatal)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_parse_globals() {
+       let input = r#"
+            global g_1 : Int = 0;
+            global g_2 : Bool = true;
+            global g_3 : Float = 0.1;
+            global g_4 : Float = -0.1;
+            global g_5 : Float = -0.1E-10;
+            global g_5 e Float = -0.1E+10;
+            global g_6 : Int = -1;
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 7);
+    }
+}

@@ -292,7 +292,7 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 }
 
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
-    let t = input.expect(|x| matches!(x, Token::Symbol(_)))?.value();
+    let t = expect_sym(input)?; 
     match &*t {
         "Int" => Ok(Type::Int),
         "Float" => Ok(Type::Float),
@@ -307,7 +307,14 @@ fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
 }
 
 fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
-    Ok(input.expect(|x| matches!(x, Token::Symbol(_)))?.value())
+    if let Token::Symbol(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(x)     
+    }
+    else {
+        Err(ParseError::Fatal)
+    }
 }
 
 fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {

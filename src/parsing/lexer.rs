@@ -56,15 +56,6 @@ pub mod ir {
         // TODO ? Op(Rc<str>),
     }
 
-    impl Token {
-        pub fn value(&self) -> Rc<str> {
-            match self {
-                Token::Symbol(x) => Rc::clone(x),
-                x => panic!("value called on {:?}", x),
-            }
-        }
-    }
-
     pub fn lex(input : &str) -> Result<Vec<Token>, usize> {
         let mut input = input.char_indices().peekable();
         let mut ret = vec![];

@@ -22,11 +22,13 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError { }
 
+#[derive(Debug)]
 pub enum Top {
     Global { name: Rc<str>, ttype: Type, value: Lit },
     Proc { name: Rc<str>, params: Vec<(Rc<str>, Type)>, return_type : Type, body : Vec<Stmt> },
 }
 
+#[derive(Debug)]
 pub enum Stmt {
     Set { var: Rc<str>, ttype : Type, val: Expr },
     Jump(Rc<str>),
@@ -37,6 +39,7 @@ pub enum Stmt {
     Label(Rc<str>),
 }
 
+#[derive(Debug)]
 pub enum Type {
     Int,
     Float,
@@ -48,6 +51,7 @@ pub enum Type {
     Coroutine,
 }
 
+#[derive(Debug)]
 pub enum Lit {
     Int(i64),
     Float(f64),
@@ -55,6 +59,7 @@ pub enum Lit {
     // TODO string
 }
 
+#[derive(Debug)]
 pub enum Expr { 
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Rc<str>> },

@@ -186,3 +186,15 @@ fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<cha
     }
 }
 
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_lex_punct() {
+        let input = "(){}:;,=";
+        let output = ir::lex(input).unwrap();
+        assert_eq!(output.len(), 8);
+    }
+}

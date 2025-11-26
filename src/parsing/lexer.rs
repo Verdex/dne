@@ -89,14 +89,14 @@ pub mod ir {
 
                     ret.push(x);
                 },
-                Some((_, '(')) => { ret.push(Token::LParen); },
-                Some((_, ')')) => { ret.push(Token::RParen); },
-                Some((_, '{')) => { ret.push(Token::LCurl); },
-                Some((_, '}')) => { ret.push(Token::RCurl); },
-                Some((_, ',')) => { ret.push(Token::Comma); },
-                Some((_, ';')) => { ret.push(Token::SemiColon); },
-                Some((_, ':')) => { ret.push(Token::Colon); },
-                Some((_, '=')) => { ret.push(Token::Equal); },
+                Some((_, '(')) => { input.next().unwrap(); ret.push(Token::LParen); },
+                Some((_, ')')) => { input.next().unwrap(); ret.push(Token::RParen); },
+                Some((_, '{')) => { input.next().unwrap(); ret.push(Token::LCurl); },
+                Some((_, '}')) => { input.next().unwrap(); ret.push(Token::RCurl); },
+                Some((_, ',')) => { input.next().unwrap(); ret.push(Token::Comma); },
+                Some((_, ';')) => { input.next().unwrap(); ret.push(Token::SemiColon); },
+                Some((_, ':')) => { input.next().unwrap(); ret.push(Token::Colon); },
+                Some((_, '=')) => { input.next().unwrap(); ret.push(Token::Equal); },
                 Some((i, _)) => { return Err(*i); },
             }
         }

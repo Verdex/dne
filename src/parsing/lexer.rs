@@ -28,6 +28,7 @@ pub mod ir {
         Equal,
         Int(i64),
         Float(f64),
+        // TODO bool 
         Symbol(Rc<str>),
         String(Vec<StringSegment>),
         Type,

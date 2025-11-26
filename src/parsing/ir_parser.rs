@@ -51,6 +51,7 @@ pub enum Type {
 pub enum Lit {
     Int(i64),
     Float(f64),
+    // TODO bool
     // TODO string
 }
 
@@ -137,6 +138,7 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         input.take()?;
         Ok(Expr::Lit(Lit::Float(x)))
     }
+    // TODO bool
     else if input.check(|x| x.eq(&Token::Call))? {
         let name = expect_sym(input)?;
         let params = expect_params(input)?;
@@ -167,6 +169,12 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let params = expect_params(input)?;
         Ok(Expr::Cons { name, params })
     }
+    // TODO var
+    // TODO type
+    // TODO slot
+    // TODO insert slot
+    // TODO remove slot
+    // TODO len
     else {
         Err(ParseError::Fatal)
     }

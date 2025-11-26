@@ -2,13 +2,13 @@
 use std::iter::Peekable;
 
 pub struct Input<T, E> {
-    ls : Peekable<std::vec::IntoIter<T>>,
+    ls : Peekable<std::vec::IntoIter<(T, usize, usize)>>,
     eof : E, 
     fatal : E,
 }
 
 impl<T, E:Clone> Input<T, E> {
-    pub fn new(input : Vec<T>, eof : E, fatal : E) -> Self {
+    pub fn new(input : Vec<(T, usize, usize)>, eof : E, fatal : E) -> Self {
         Input { 
             ls: input.into_iter().peekable(),
             eof,
@@ -17,7 +17,7 @@ impl<T, E:Clone> Input<T, E> {
     }
     pub fn check<F:Fn(&T) -> bool>(&mut self, f : F) -> Result<bool, E> {
         match self.ls.peek() {
-            Some(l) if f(l) => {
+            Some((l, _, _)) if f(l) => {
                 self.ls.next().unwrap();
                 Ok(true)
             },
@@ -27,8 +27,8 @@ impl<T, E:Clone> Input<T, E> {
     }
     pub fn expect<F:Fn(&T) -> bool>(&mut self, f : F) -> Result<T, E> {
         match self.ls.peek() {
-            Some(l) if f(l) => {
-                let l = self.ls.next().unwrap();
+            Some((l, _, _)) if f(l) => {
+                let (l, _, _) = self.ls.next().unwrap();
                 Ok(l)
             },
             Some(_) => Err(self.fatal.clone()),
@@ -37,13 +37,13 @@ impl<T, E:Clone> Input<T, E> {
     }
     pub fn peek(&mut self) -> Result<&T, E> {
         match self.ls.peek() {
-            Some(l) => Ok(l),
+            Some((l, _, _)) => Ok(l),
             None => Err(self.eof.clone()),
         }
     }
     pub fn take(&mut self) -> Result<T, E> {
         match self.ls.next() {
-            Some(l) => Ok(l),
+            Some((l, _, _)) => Ok(l),
             None => Err(self.eof.clone()),
         }
     }

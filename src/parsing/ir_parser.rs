@@ -82,6 +82,7 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
         Err(i) => { return Err(ParseError::Lex(i)); },
         Ok(ls) => ls,
     };
+    let input = input.into_iter().map(|x| (x, 0, 0)).collect::<Vec<_>>();
     let mut input = Input::new(input, ParseError::Eof, ParseError::Fatal);
 
     parse_tops(&mut input)

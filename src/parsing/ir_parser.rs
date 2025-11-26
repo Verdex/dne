@@ -79,7 +79,7 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
     };
     let mut input = Input::new(input, ParseError::Eof, ParseError::Fatal);
 
-    todo!()
+    parse_tops(&mut input)
 }
 
 fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {

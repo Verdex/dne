@@ -89,7 +89,7 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
 
 fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
     let mut ret = vec![];
-    loop {
+    while !input.empty() {
         if input.check(|x| x.eq(&Token::Proc))? {
             ret.push(parse_proc(input)?);
         }

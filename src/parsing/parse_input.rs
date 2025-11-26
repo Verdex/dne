@@ -47,4 +47,10 @@ impl<T, E:Clone> Input<T, E> {
             None => Err(self.eof.clone()),
         }
     }
+    pub fn empty(&mut self) -> bool {
+        match self.ls.peek() {
+            Some(_) => false,
+            None => true,
+        }
+    }
 }

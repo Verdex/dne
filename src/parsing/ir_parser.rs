@@ -67,6 +67,9 @@ pub enum Expr {
     Length(Rc<str>),
     Type(Rc<str>),
     Var(Rc<str>),
+    Slot { var: Rc<str>, index: usize },
+    SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
+    SlotRemove { var: Rc<str>, index: usize },
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
@@ -187,9 +190,22 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
     else if input.check(|x| x.eq(&Token::Type))? {
         Ok(Expr::Type(expect_sym(input)?)) 
     }
-    // TODO slot
-    // TODO insert slot
-    // TODO remove slot
+    else if input.check(|x| x.eq(&Token::Slot))? {
+        let var = expect_sym(input)?;
+        let index = expect_index(input)?;
+        Ok(Expr::Slot { var, index })
+    }
+    else if input.check(|x| x.eq(&Token::SlotInsert))? {
+        let var = expect_sym(input)?;
+        let var_input = expect_sym(input)?;
+        let index = expect_index(input)?;
+        Ok(Expr::SlotInsert { var, input: var_input, index })
+    }
+    else if input.check(|x| x.eq(&Token::SlotRemove))? {
+        let var = expect_sym(input)?;
+        let index = expect_index(input)?;
+        Ok(Expr::SlotRemove { var, index })
+    }
     else {
         Err(ParseError::Fatal)
     }
@@ -225,4 +241,18 @@ fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
     }
     input.expect(|x| x.eq(&Token::RParen))?;
     Ok(ret)
+}
+
+fn expect_index(input : &mut Input) -> Result<usize, ParseError> {
+    if let Token::Int(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        match usize::try_from(x) {
+            Ok(x) => Ok(x),
+            Err(_) => Err(ParseError::Fatal),
+        }
+    }
+    else {
+        Err(ParseError::Fatal)
+    }
 }

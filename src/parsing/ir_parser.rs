@@ -23,8 +23,8 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError { }
 
 pub enum Top {
-    Global,
-    Proc
+    Global { name: Rc<str>, ttype: Type, value: Lit },
+    Proc { name: Rc<str>, params: Vec<(Rc<str>, Type)>, return_type : Type, body : Vec<Stmt> },
 }
 
 pub enum Stmt {
@@ -82,6 +82,56 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
     todo!()
 }
 
+fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
+    let mut ret = vec![];
+    loop {
+        if input.check(|x| x.eq(&Token::Proc))? {
+            ret.push(parse_proc(input)?);
+        }
+        else if input.check(|x| x.eq(&Token::Global))? {
+            let name = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::Colon))?;
+            let ttype = parse_type(input)?;
+            input.expect(|x| x.eq(&Token::Equal))?;
+            let value = parse_lit(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Top::Global { name, ttype, value });
+        }
+        else {
+            return Err(ParseError::Fatal);
+        }
+    }
+    Ok(ret)
+}
+
+fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
+    let name = expect_sym(input)?;
+    input.expect(|x| x.eq(&Token::LParen))?;
+    let mut params = vec![];
+    loop {
+        let param = expect_sym(input)?;
+        input.expect(|x| x.eq(&Token::Colon))?;
+        let ttype = parse_type(input)?;
+        params.push((param, ttype));
+
+        if input.check(|x| x.eq(&Token::RParen))? {
+            break;
+        }
+        else if input.check(|x| x.eq(&Token::Comma))? {
+            continue;
+        }
+        else {
+            return Err(ParseError::Fatal);
+        }
+    }
+    input.expect(|x| x.eq(&Token::Arrow))?;
+    let return_type = parse_type(input)?;
+    input.expect(|x| x.eq(&Token::LCurl))?;
+    let body = parse_stmts(input)?;
+    input.expect(|x| x.eq(&Token::RCurl))?;
+    Ok( Top::Proc { name, params, return_type, body } )
+}
+
 fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
     let mut ret = vec![];
     loop {
@@ -125,13 +175,30 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
 }
 
 fn parse_set(input : &mut Input) -> Result<Stmt, ParseError> {
-    let var = input.expect(|x| matches!(x, Token::Symbol(_)))?;
+    let var = expect_sym(input)?; 
     input.expect(|x| x.eq(&Token::Colon))?;
     let ttype = parse_type(input)?;
     input.expect(|x| x.eq(&Token::Equal))?;
     let val = parse_expr(input)?;
     input.expect(|x| x.eq(&Token::SemiColon))?;
-    Ok(Stmt::Set { var: var.value(), val, ttype })
+    Ok(Stmt::Set { var, val, ttype })
+}
+
+fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
+    if let Token::Int(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Lit::Int(x))
+    }
+    else if let Token::Float(x) = input.peek()? {
+        let x = *x;
+        input.take()?;
+        Ok(Lit::Float(x))
+    }
+    // TODO bool
+    else {
+        Err(ParseError::Fatal)
+    }
 }
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
@@ -235,11 +302,16 @@ fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
     let mut ret = vec![];
     loop {
         ret.push(expect_sym(input)?);
-        if input.check(|x| x.eq(&Token::Comma))? {
+        if input.check(|x| x.eq(&Token::RParen))? {
             break;
         }
+        else if input.check(|x| x.eq(&Token::Comma))? {
+            continue;
+        }
+        else {
+            return Err(ParseError::Fatal);
+        }
     }
-    input.expect(|x| x.eq(&Token::RParen))?;
     Ok(ret)
 }
 

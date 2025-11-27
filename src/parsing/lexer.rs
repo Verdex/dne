@@ -47,7 +47,7 @@ pub mod ir {
         Set,
         Jump,
         Label,
-        BranchEqual,
+        BranchTrue,
         Global,
         Call,
         DynCall,
@@ -67,6 +67,7 @@ pub mod ir {
         loop {
             // TODO string
             // TODO comment
+            // TODO :Symbol
             match input.peek() {
                 None => { return Ok(ret); },
                 Some((_, c)) if c.is_whitespace() => {
@@ -123,13 +124,14 @@ pub mod ir {
             "set" => Token::Set,
             "jump" => Token::Jump,
             "label" => Token::Label,
-            "branch_equal" => Token::BranchEqual,
+            "branch_true" => Token::BranchTrue,
             "global" => Token::Global,
             "call" => Token::Call,
             "dyn_call" => Token::DynCall,
             "closure" => Token::Closure,
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
+            "cons" => Token::Cons,
             s => Token::Symbol(s.into()),
         };
 

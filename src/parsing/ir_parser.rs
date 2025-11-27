@@ -152,7 +152,7 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Jump(r));
         }
-        else if input.check(|x| x.eq(&Token::BranchEqual))? {
+        else if input.check(|x| x.eq(&Token::BranchTrue))? {
             let label = expect_sym(input)?;
             let var = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
@@ -386,5 +386,96 @@ mod test {
 
         let output = parse(input).unwrap();
         assert_eq!(output.len(), 7);
+    }
+
+    #[test]
+    fn should_parse_empty_params_proc() {
+        let input = r#"
+            proc name() -> Int { set x : Int = 0; return x; } 
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_params_proc() {
+        let input = r#"
+            proc name(x : Int, y : Int, z : Int) -> Int { return x; } 
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_types() {
+        let input = r#"
+            proc name(x : Int) -> Int { return x; } 
+            proc name(x : Float) -> Float { return x; } 
+            proc name(x : String) -> String { return x; } 
+            proc name(x : Bool) -> Bool { return x; } 
+            proc name(x : Symbol) -> Symbol { return x; } 
+            proc name(x : Ref) -> Ref { return x; } 
+            proc name(x : Closure) -> Closure { return x; } 
+            proc name(x : Coroutine) -> Coroutine { return x; } 
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 8);
+    }
+
+    #[test]
+    fn should_parse_statements() {
+        let input = r#"
+            proc name() -> Int { 
+                set x : Int = 0;
+                set b : Bool = false;
+                yield x;
+                jump location;
+                label location;
+                branch_true location b;
+                break;
+                return x;
+            } 
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_exprs() {
+        let input = r#"
+            proc name() -> Int { 
+                set x : Int = 0;
+                set y : Float = 1.0;
+                set z : Bool = true;
+                set w : Int = call name (x, y, z);
+                set a : Coroutine = coroutine name (x, y, z);
+                set b : Int = resume a;
+                set c : Int = x;
+                set i : Ref = cons Blah (x, y, z);
+                set j : Symbol = type i;
+                set k : Int = slot i 0;
+                set f : Closure = closure name (x, y, z);
+                set g : Int = dyn_call f (x, y, z);
+                set q : Coroutine = dyn_coroutine name (x, y, z);
+                return x;
+            } 
+       "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+    }
+
+    fn d(input : &str, x : Result<Vec<Top>, ParseError>) {
+        match x {
+            Err(ParseError::Fatal(s, e)) => {
+                let w = crate::util::underline(input, s, e);
+                panic!("{w}");
+            },
+            _ => panic!("else"),
+        }
     }
 }

@@ -374,7 +374,7 @@ mod test {
             global g_3 : Float = 0.1;
             global g_4 : Float = -0.1;
             global g_5 : Float = -0.1E-10;
-            global g_5 e Float = -0.1E+10;
+            global g_5 : Float = -0.1E+10;
             global g_6 : Int = -1;
        "#; 
 

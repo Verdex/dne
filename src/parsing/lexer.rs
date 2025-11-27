@@ -74,8 +74,8 @@ pub mod ir {
                 },
                 Some((s, c)) if c.is_alphabetic() || *c == '_' => {
                     let s = *s;
-                    let (t, e) = symbol(&mut input)?;
-                    ret.push((t, s, e));
+                    let (t, l) = symbol(&mut input)?;
+                    ret.push((t, s, s + l));
                 },
                 Some((s, c)) if c.is_numeric() || *c == '-' => { 
                     let s = *s;
@@ -104,7 +104,7 @@ pub mod ir {
     fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {
         let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
         let s = s.into_iter().collect::<String>();
-        let end = s.len() - 1;
+        let l = s.len() - 1;
 
         let r = match s.as_str() {
             "type" => Token::Type,
@@ -133,7 +133,7 @@ pub mod ir {
             s => Token::Symbol(s.into()),
         };
 
-        Ok((r, end))
+        Ok((r, l))
     }
 }
 
@@ -163,7 +163,7 @@ fn number_or_arrow(input : &mut Input) -> Result<(Num, usize), usize> {
         s.insert(0, '-');
     }
 
-    let end = s.len() - 1;
+    let end = i + s.len() - 1;
 
     match s.parse::<i64>() {
         Ok(x) => Ok((Num::Int(x), end)),

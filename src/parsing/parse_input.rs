@@ -4,15 +4,21 @@ use std::iter::Peekable;
 pub struct Input<T, E> {
     ls : Peekable<std::vec::IntoIter<(T, usize, usize)>>,
     eof : E, 
-    fatal : E,
+    fatal : fn(usize, usize) -> E,
 }
 
 impl<T, E:Clone> Input<T, E> {
-    pub fn new(input : Vec<(T, usize, usize)>, eof : E, fatal : E) -> Self {
+    pub fn new(input : Vec<(T, usize, usize)>, eof : E, fatal : fn(usize, usize) -> E) -> Self {
         Input { 
             ls: input.into_iter().peekable(),
             eof,
             fatal,
+        }
+    }
+    pub fn current(&mut self) -> Result<(usize, usize), E> {
+        match self.ls.peek() {
+            Some((_, s, e)) => Ok((*s, *e)),
+            None => Err(self.eof.clone()),
         }
     }
     pub fn check<F:Fn(&T) -> bool>(&mut self, f : F) -> Result<bool, E> {
@@ -31,7 +37,7 @@ impl<T, E:Clone> Input<T, E> {
                 let (l, _, _) = self.ls.next().unwrap();
                 Ok(l)
             },
-            Some(_) => Err(self.fatal.clone()),
+            Some((_, s, e)) => Err((self.fatal)(*s, *e)),
             None => Err(self.eof.clone()),
         }
     }

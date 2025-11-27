@@ -114,21 +114,23 @@ fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
     let name = expect_sym(input)?;
     input.expect(|x| x.eq(&Token::LParen))?;
     let mut params = vec![];
-    loop {
-        let param = expect_sym(input)?;
-        input.expect(|x| x.eq(&Token::Colon))?;
-        let ttype = parse_type(input)?;
-        params.push((param, ttype));
+    if !input.check(|x| x.eq(&Token::RParen))? {
+        loop {
+            let param = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::Colon))?;
+            let ttype = parse_type(input)?;
+            params.push((param, ttype));
 
-        if input.check(|x| x.eq(&Token::RParen))? {
-            break;
-        }
-        else if input.check(|x| x.eq(&Token::Comma))? {
-            continue;
-        }
-        else {
-            let (s, e) = input.current()?;
-            return Err(ParseError::Fatal(s, e));
+            if input.check(|x| x.eq(&Token::RParen))? {
+                break;
+            }
+            else if input.check(|x| x.eq(&Token::Comma))? {
+                continue;
+            }
+            else {
+                let (s, e) = input.current()?;
+                return Err(ParseError::Fatal(s, e));
+            }
         }
     }
     input.expect(|x| x.eq(&Token::Arrow))?;
@@ -328,8 +330,12 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
 fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
     input.expect(|x| x.eq(&Token::LParen))?;
     let mut ret = vec![];
+    if input.check(|x| x.eq(&Token::RParen))? {
+        return Ok(ret);
+    }
     loop {
         ret.push(expect_sym(input)?);
+        
         if input.check(|x| x.eq(&Token::RParen))? {
             break;
         }

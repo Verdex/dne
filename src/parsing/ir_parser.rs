@@ -7,7 +7,7 @@ type Input = super::parse_input::Input<Token, ParseError>;
 #[derive(Debug, Clone)]
 pub enum ParseError {
     Lex(usize),
-    Fatal,
+    Fatal(usize, usize),
     Eof,
 }
 
@@ -82,7 +82,7 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
         Err(i) => { return Err(ParseError::Lex(i)); },
         Ok(ls) => ls,
     };
-    let mut input = Input::new(input, ParseError::Eof, ParseError::Fatal);
+    let mut input = Input::new(input, ParseError::Eof, |s, e| ParseError::Fatal(s, e));
 
     parse_tops(&mut input)
 }
@@ -103,7 +103,8 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
             ret.push(Top::Global { name, ttype, value });
         }
         else {
-            return Err(ParseError::Fatal);
+            let (s, e) = input.current()?;
+            return Err(ParseError::Fatal(s, e));
         }
     }
     Ok(ret)
@@ -126,7 +127,8 @@ fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
             continue;
         }
         else {
-            return Err(ParseError::Fatal);
+            let (s, e) = input.current()?;
+            return Err(ParseError::Fatal(s, e));
         }
     }
     input.expect(|x| x.eq(&Token::Arrow))?;
@@ -206,7 +208,8 @@ fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
         Ok(Lit::Bool(x))
     }
     else {
-        Err(ParseError::Fatal)
+        let (s, e) = input.current()?;
+        Err(ParseError::Fatal(s, e))
     }
 }
 
@@ -287,7 +290,8 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         Ok(Expr::SlotRemove { var, index })
     }
     else {
-        Err(ParseError::Fatal)
+        let (s, e) = input.current()?;
+        Err(ParseError::Fatal(s, e))
     }
 }
 
@@ -302,7 +306,10 @@ fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
         "Ref" => Ok(Type::Ref),
         "Closure" => Ok(Type::Closure),
         "Coroutine" => Ok(Type::Coroutine),
-        _ => Err(ParseError::Fatal),
+        _ => {
+            let (s, e) = input.current()?;
+            Err(ParseError::Fatal(s, e))
+        },
     }
 }
 
@@ -313,7 +320,8 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
         Ok(x)     
     }
     else {
-        Err(ParseError::Fatal)
+        let (s, e) = input.current()?;
+        Err(ParseError::Fatal(s, e))
     }
 }
 
@@ -329,7 +337,8 @@ fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
             continue;
         }
         else {
-            return Err(ParseError::Fatal);
+            let (s, e) = input.current()?;
+            return Err(ParseError::Fatal(s, e));
         }
     }
     Ok(ret)
@@ -341,11 +350,15 @@ fn expect_index(input : &mut Input) -> Result<usize, ParseError> {
         input.take()?;
         match usize::try_from(x) {
             Ok(x) => Ok(x),
-            Err(_) => Err(ParseError::Fatal),
+            Err(_) => {
+                let (s, e) = input.current()?;
+                Err(ParseError::Fatal(s, e))
+            },
         }
     }
     else {
-        Err(ParseError::Fatal)
+        let (s, e) = input.current()?;
+        Err(ParseError::Fatal(s, e))
     }
 }
 

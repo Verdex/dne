@@ -59,7 +59,7 @@ pub mod ir {
     pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {
         macro_rules! punct {
             ($input:ident, $ret:ident, $i:ident, $t:expr) => { { let i = *$i; $input.next().unwrap(); $ret.push(($t, i, i)); } }
-        };
+        }
 
         let mut input = input.char_indices().peekable();
         let mut ret : Vec<(Token, usize, usize)> = vec![];

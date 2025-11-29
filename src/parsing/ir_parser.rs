@@ -37,6 +37,8 @@ pub enum Stmt {
     Yield(Rc<str>),
     Break,
     Label(Rc<str>),
+    SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
+    SlotRemove { var: Rc<str>, index: usize },
 }
 
 #[derive(Debug)]
@@ -73,8 +75,6 @@ pub enum Expr {
     Type(Rc<str>),
     Var(Rc<str>),
     Slot { var: Rc<str>, index: usize },
-    SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
-    SlotRemove { var: Rc<str>, index: usize },
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
@@ -176,6 +176,19 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
             let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Label(r));
+        }
+        else if input.check(|x| x.eq(&Token::SlotInsert))? {
+            let var = expect_sym(input)?;
+            let var_input = expect_sym(input)?;
+            let index = expect_index(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::SlotInsert { var, input: var_input, index })
+        }
+        else if input.check(|x| x.eq(&Token::SlotRemove))? {
+            let var = expect_sym(input)?;
+            let index = expect_index(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::SlotRemove { var, index })
         }
         else {
             return Ok(ret);
@@ -279,17 +292,6 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let var = expect_sym(input)?;
         let index = expect_index(input)?;
         Ok(Expr::Slot { var, index })
-    }
-    else if input.check(|x| x.eq(&Token::SlotInsert))? {
-        let var = expect_sym(input)?;
-        let var_input = expect_sym(input)?;
-        let index = expect_index(input)?;
-        Ok(Expr::SlotInsert { var, input: var_input, index })
-    }
-    else if input.check(|x| x.eq(&Token::SlotRemove))? {
-        let var = expect_sym(input)?;
-        let index = expect_index(input)?;
-        Ok(Expr::SlotRemove { var, index })
     }
     else {
         let (s, e) = input.current()?;
@@ -436,6 +438,8 @@ mod test {
                 label location;
                 branch_true location b;
                 break;
+                slot_insert r i 1;
+                slot_remove r 0;
                 return x;
             } 
        "#; 
@@ -461,6 +465,7 @@ mod test {
                 set f : Closure = closure name (x, y, z);
                 set g : Int = dyn_call f (x, y, z);
                 set q : Coroutine = dyn_coroutine name (x, y, z);
+                set r : Int = length i;
                 return x;
             } 
        "#; 

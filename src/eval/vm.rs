@@ -5,25 +5,20 @@ use std::rc::Rc;
 use super::data::*;
 use super::error::*;
 
-pub struct Vm<T, S> {
-    funs : Vec<Fun<T>>,
-    ops : Vec<GenOp<T, S>>,
-    globals: Vec<S>,
-    frames : Vec<Frame<T>>,
-    current : Frame<T>,
+pub struct Vm {
+    funs : Vec<Fun>,
+    globals: Vec<RuntimeData>,
+    frames : Vec<Frame>,
+    current : Frame,
 }
 
-impl<T : Clone, S> Vm<T, S> {
-    pub fn new(funs : Vec<Fun<T>>, ops : Vec<GenOp<T, S>>) -> Self {
+impl Vm {
+    pub fn new(funs : Vec<Fun>) -> Self {
         let current = Frame { fun_id: 0, ip: 0, ret: None, branch: false, dyn_call: None, locals: vec![], coroutines: vec![] };
-        Vm { funs, ops, globals: vec![], frames: vec![], current }
+        Vm { funs, globals: vec![], frames: vec![], current }
     }
 
-    pub fn with_globals(&mut self, globals: Vec<S>) -> Vec<S> { 
-        std::mem::replace(&mut self.globals, globals)
-    }
-
-    pub fn run(&mut self, entry : usize) -> Result<Option<T>, VmError> {
+    pub fn run(&mut self, entry : usize) -> Result<Option<RuntimeData>, VmError> {
         self.current.fun_id = entry;
 
         loop {

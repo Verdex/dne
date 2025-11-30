@@ -1,7 +1,15 @@
 
 use std::rc::Rc;
 
-pub enum Op<T> {
+#[derive(Debug)]
+pub enum RuntimeData {
+    Int(i64),
+    Float(f64),
+    Symbol(Rc<str>),
+    Ref(usize),
+}
+
+pub enum Op {
     Gen(usize, Vec<usize>),
     Call(usize, Vec<usize>),
     ReturnLocal(usize), 
@@ -12,7 +20,7 @@ pub enum Op<T> {
     Dup(usize),
     Swap(usize, usize),
     PushRet,
-    PushLocal(T),
+    PushLocal(RuntimeData),
     CoYield(usize),
     CoFinish,
     CoResume(usize),
@@ -21,56 +29,28 @@ pub enum Op<T> {
     CoSwap(usize, usize),
 }
 
-pub struct Fun<T> {
+pub struct Fun {
     pub name : Rc<str>,
-    pub instrs : Vec<Op<T>>,
-}
-
-pub struct VmEnv<'a, T, S> {
-    pub globals: &'a mut Vec<S>,
-    pub frames : &'a mut Vec<Frame<T>>,
-    pub current : &'a mut Frame<T>,
-}
-
-pub enum GenOp<T, S> {
-    Vm { name : Rc<str>, op : for<'a> fn(vm : VmEnv<'a, T, S>, params : &[usize]) -> Result<Option<T>, Box<dyn std::error::Error>> },
-    DynGlobal { name : Rc<str>, op : fn(globals : &mut Vec<S>, locals : &[T], params : &[usize]) -> Result<Option<T>, Box<dyn std::error::Error>> },
-    Global { name : Rc<str>, op : fn(globals : &mut Vec<S>, params : &[usize]) -> Result<Option<T>, Box<dyn std::error::Error>> },
-    Local { name : Rc<str>, op : fn(locals : &mut Vec<T>, params : &[usize]) -> Result<Option<T>, Box<dyn std::error::Error>> },
-    Frame { name : Rc<str>, op : fn(frame : &mut Frame<T>, params : &[usize]) -> Result<Option<T>, Box<dyn std::error::Error>> },
-}
-
-impl<T, S> GenOp<T, S> {
-    pub fn name(&self) -> Rc<str> {
-        match self {
-            GenOp::Vm { name, .. } => Rc::clone(name), 
-            GenOp::DynGlobal { name, .. } => Rc::clone(name), 
-            GenOp::Global { name, .. } => Rc::clone(name), 
-            GenOp::Local { name, .. } => Rc::clone(name), 
-            GenOp::Frame { name, .. } => Rc::clone(name), 
-        }
-    }
+    pub instrs : Vec<Op>,
 }
 
 #[derive(Clone)]
-pub struct Frame<T> {
-    pub (crate) fun_id : usize,
-    pub (crate) ip : usize,
-    pub (crate) ret : Option<T>,
-    pub branch : bool,
-    pub dyn_call : Option<usize>,
-    pub locals : Vec<T>,
-    pub coroutines : Vec<Coroutine<T>>,
+pub struct Frame {
+    pub fun_id : usize,
+    pub ip : usize,
+    pub ret : Option<RuntimeData>,
+    pub locals : Vec<RuntimeData>,
+    pub coroutines : Vec<Coroutine>,
 }
 
 #[derive(Clone)]
-pub enum Coroutine<T> {
-    Active(Frame<T>),
+pub enum Coroutine {
+    Active(Frame),
     Running,
     Finished,
 }
 
-impl<T> Coroutine<T> {
+impl Coroutine {
     pub fn is_alive(&self) -> bool {
         match self { 
             Coroutine::Active(_) | Coroutine::Running => true,

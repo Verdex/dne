@@ -58,6 +58,7 @@ pub enum Lit {
     Int(i64),
     Float(f64),
     Bool(bool),
+    ConsType(Rc<str>),
     // TODO string
 }
 
@@ -222,6 +223,11 @@ fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
         input.take()?;
         Ok(Lit::Bool(x))
     }
+    else if let Token::ConsType(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Lit::ConsType(x))
+    }
     else {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
@@ -243,6 +249,11 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let x = *x;
         input.take()?;
         Ok(Expr::Lit(Lit::Bool(x)))
+    }
+    else if let Token::ConsType(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Expr::Lit(Lit::ConsType(x)))
     }
     else if let Token::Symbol(x) = input.peek()? {
         let x = Rc::clone(x);
@@ -384,10 +395,11 @@ mod test {
             global g_5 : Float = -0.1E-10;
             global g_5 : Float = -0.1E+10;
             global g_6 : Int = -1;
+            global g_7 : Symbol = ~Symbol;
        "#; 
 
         let output = parse(input).unwrap();
-        assert_eq!(output.len(), 7);
+        assert_eq!(output.len(), 8);
     }
 
     #[test]
@@ -466,6 +478,7 @@ mod test {
                 set g : Int = dyn_call f (x, y, z);
                 set q : Coroutine = dyn_coroutine name (x, y, z);
                 set r : Int = length i;
+                set s : Symbol = ~Sym;
                 return x;
             } 
        "#; 

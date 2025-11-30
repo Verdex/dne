@@ -2,6 +2,9 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
+use super::data::*;
+use super::error::*;
+
 pub struct Vm<T, S> {
     funs : Vec<Fun<T>>,
     ops : Vec<GenOp<T, S>>,

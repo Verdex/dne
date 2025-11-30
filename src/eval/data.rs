@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+
 pub enum Op<T> {
     Gen(usize, Vec<usize>),
     Call(usize, Vec<usize>),

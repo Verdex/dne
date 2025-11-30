@@ -1,5 +1,5 @@
 
-pub mod error;
+use std::rc::Rc;
 
 pub type StackTrace = Vec<(Rc<str>, usize)>;
 

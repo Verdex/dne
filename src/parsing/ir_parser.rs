@@ -69,6 +69,7 @@ pub enum Expr {
     DynCall { name : Rc<str>, params : Vec<Rc<str>> },
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
+    // TODO params => captures
     Closure { name : Rc<str>, params : Vec<Rc<str>> },
     Cons { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),

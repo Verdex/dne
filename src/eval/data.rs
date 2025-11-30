@@ -3,33 +3,37 @@ use std::rc::Rc;
 
 #[derive(Debug)]
 pub enum RuntimeData {
+    Bool(bool),
     Int(i64),
     Float(f64),
     Symbol(Rc<str>),
     Ref(usize),
+    // TODO closure, coroutine
 }
 
 pub enum Op {
-    Gen(usize, Vec<usize>),
     Call(usize, Vec<usize>),
+    DynCall(usize, Vec<usize>),
+    Resume(usize),
+    DynResume(usize),
     ReturnLocal(usize), 
-    Return,
-    Branch(usize),
-    DynCall(Vec<usize>),
-    Drop(usize),
-    Dup(usize),
-    Swap(usize, usize),
-    PushRet,
-    PushLocal(RuntimeData),
-    CoYield(usize),
-    CoFinish,
-    CoResume(usize),
-    CoDrop(usize),
-    CoDup(usize), 
-    CoSwap(usize, usize),
+    Jump(usize),
+    BranchEqual { label: usize, local: usize },
+    SetLocalData(usize, RuntimeData),
+    SetLocalReturn(usize),
+    SetLocalVar { src: usize, dest: usize },
+    SetLocalLength { src: usize, dest: usize },
+    SetLocalType { src: usize, dest: usize },
+    SetLocalSlot { src: usize, index: usize, dest: usize },
+    Closure { proc_id: usize, env: Vec<usize> },
+    Cons { sym_var: usize, captures: Vec<usize> },
+    Coroutine { proc_id: usize, params: Vec<usize> },
+    DynCoroutine { proc_id: usize, params: Vec<usize> },
+    Yield(usize),
+    Break,
 }
 
-pub struct Fun {
+pub struct Fun { // TODO rename proc
     pub name : Rc<str>,
     pub instrs : Vec<Op>,
 }
@@ -38,9 +42,7 @@ pub struct Fun {
 pub struct Frame {
     pub fun_id : usize,
     pub ip : usize,
-    pub ret : Option<RuntimeData>,
     pub locals : Vec<RuntimeData>,
-    pub coroutines : Vec<Coroutine>,
 }
 
 #[derive(Clone)]

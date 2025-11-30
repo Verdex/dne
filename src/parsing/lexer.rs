@@ -30,6 +30,7 @@ pub mod ir {
         Float(f64),
         Bool(bool),
         Symbol(Rc<str>),
+        ConsType(Rc<str>),
         String(Vec<StringSegment>),
         Type,
         Slot,
@@ -67,7 +68,6 @@ pub mod ir {
         loop {
             // TODO string
             // TODO comment
-            // TODO :Symbol
             match input.peek() {
                 None => { return Ok(ret); },
                 Some((_, c)) if c.is_whitespace() => {
@@ -89,6 +89,11 @@ pub mod ir {
 
                     ret.push((x, s, e));
                 },
+                Some((s, c)) if *c == '~' => {
+                    let s = *s;
+                    let (t, l) = cons_type(&mut input)?;
+                    ret.push((t, s, s + l));
+                },
                 Some((i, '(')) => punct!(input, ret, i, Token::LParen),
                 Some((i, ')')) => punct!(input, ret, i, Token::RParen), 
                 Some((i, '{')) => punct!(input, ret, i, Token::LCurl), 
@@ -100,6 +105,14 @@ pub mod ir {
                 Some((i, _)) => { return Err(*i); },
             }
         }
+    }
+
+    fn cons_type(input : &mut Input) -> Result<(Token, usize), usize> {
+        input.next().unwrap();
+        let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
+        let s = s.into_iter().collect::<String>();
+        let l = s.len() - 1;
+        Ok((Token::ConsType(s.into()), l))
     }
 
     fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {

@@ -22,15 +22,17 @@ pub enum Op {
     SetLocalData(usize, RuntimeData),
     SetLocalReturn(usize),
     SetLocalVar { src: usize, dest: usize },
-    SetLocalLength { src: usize, dest: usize },
-    SetLocalType { src: usize, dest: usize },
-    SetLocalSlot { src: usize, index: usize, dest: usize },
+    GetLength(usize),
+    GetType(usize),
+    GetSlot { local: usize, index: usize },
     Closure { proc_id: usize, env: Vec<usize> },
     Cons { sym_var: usize, captures: Vec<usize> },
     Coroutine { proc_id: usize, params: Vec<usize> },
     DynCoroutine { proc_id: usize, params: Vec<usize> },
     Yield(usize),
     Break,
+    InsertSlot { dest: usize, src: usize, index: usize },
+    RemoveSlot { local: usize, index: usize },
 }
 
 pub struct Fun { // TODO rename proc

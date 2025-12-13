@@ -14,7 +14,7 @@ pub struct Vm {
 
 impl Vm {
     pub fn new(funs : Vec<Fun>) -> Self {
-        let current = Frame { fun_id: 0, ip: 0, ret: None, branch: false, dyn_call: None, locals: vec![], coroutines: vec![] };
+        let current = Frame { fun_id: 0, ip: 0, locals: vec![] };
         Vm { funs, globals: vec![], frames: vec![], current }
     }
 
@@ -33,6 +33,8 @@ impl Vm {
             }
 
             match self.funs[self.current.fun_id].instrs[self.current.ip] {
+                _ => todo!(), 
+                /*
                 Op::Branch(target) if self.current.branch => {
                     self.current.ip = target;
                 },
@@ -232,7 +234,7 @@ impl Vm {
                 Op::PushLocal(ref t) => {
                     self.current.locals.push(t.clone());
                     self.current.ip += 1;
-                }
+                }*/
             }
         }
     }
@@ -267,7 +269,7 @@ fn get_local<T : Clone>(index: usize, locals : Cow<Vec<T>>) -> Result<T, Box<dyn
     }
 }
 
-fn co_is_running<T>(coroutine : &Coroutine<T>) -> bool {
+fn co_is_running(coroutine : &Coroutine) -> bool {
     match coroutine { 
         Coroutine::Running => true,
         _ => false,

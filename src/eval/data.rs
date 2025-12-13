@@ -1,17 +1,18 @@
 
 use std::rc::Rc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RuntimeData {
     Bool(bool),
     Int(i64),
     Float(f64),
     Symbol(Rc<str>),
     Ref(usize),
-    // TODO closure, coroutine
+    // TODO closure, coroutine, string
 }
 
 pub enum Op {
+    // TODO set global
     Call(usize, Vec<usize>),
     DynCall(usize, Vec<usize>),
     Resume(usize),

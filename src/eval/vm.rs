@@ -33,7 +33,26 @@ impl Vm {
             }
 
             match self.funs[self.current.fun_id].instrs[self.current.ip] {
-                _ => todo!(), 
+                Op::Call(proc_id, params) => todo!(),
+                Op::DynCall(local, params) => todo!(),
+                Op::Resume(local) => todo!(),
+                Op::ReturnLocal(local) => todo!(), 
+                Op::Jump(label) => todo!(),
+                Op::BranchEqual { label, local } => todo!(),
+                Op::SetLocalData(local, data) => todo!(),
+                Op::SetLocalReturn(local) => todo!(),
+                Op::SetLocalVar { src, dest } => todo!(),
+                Op::GetLength(local) => todo!(),
+                Op::GetType(local) => todo!(),
+                Op::GetSlot { local, index } => todo!(),
+                Op::Closure { proc_id, env } => todo!(),
+                Op::Cons { sym_var, captures } => todo!(),
+                Op::Coroutine { proc_id, params } => todo!(),
+                Op::DynCoroutine { proc_id, params } => todo!(),
+                Op::Yield(local) => todo!(),
+                Op::Break => todo!(),
+                Op::InsertSlot { dest, src, index } => todo!(),
+                Op::RemoveSlot { local, index } => todo!(),
                 /*
                 Op::Branch(target) if self.current.branch => {
                     self.current.ip = target;

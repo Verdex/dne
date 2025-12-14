@@ -16,7 +16,6 @@ pub enum Op {
     Call(usize, Vec<usize>),
     DynCall(usize, Vec<usize>),
     Resume(usize),
-    DynResume(usize),
     ReturnLocal(usize), 
     Jump(usize),
     BranchEqual { label: usize, local: usize },

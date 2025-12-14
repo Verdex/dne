@@ -32,7 +32,7 @@ impl Vm {
                 return Err(VmError::InstrPointerOutOfRange(self.current.ip, self.stack_trace()));
             }
 
-            match self.funs[self.current.fun_id].instrs[self.current.ip] {
+            match &self.funs[self.current.fun_id].instrs[self.current.ip] {
                 Op::Call(proc_id, params) => todo!(),
                 Op::DynCall(local, params) => todo!(),
                 Op::Resume(local) => todo!(),

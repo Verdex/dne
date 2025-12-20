@@ -83,11 +83,21 @@ impl Vm {
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
+                Op::Jump(label) => {
+                    self.current.ip = label;
+                },
+                Op::BranchEqual { local, .. } if local >= self.current.locals.len()  => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::BranchEqual { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) )  => {
+                    return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "bool", found: format!("{:?}", self.current.locals[local]).into() });
+                },
+                Op::BranchEqual { label, local } => {
+
+                },
                 /*
                 Op::Resume(local) => todo!(),
                 Op::ReturnLocal(local) => todo!(), 
-                Op::Jump(label) => todo!(),
-                Op::BranchEqual { label, local } => todo!(),
                 Op::SetLocalData(local, data) => todo!(),
                 Op::SetLocalReturn(local) => todo!(),
                 Op::SetLocalVar { src, dest } => todo!(),

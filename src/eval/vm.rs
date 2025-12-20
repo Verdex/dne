@@ -30,6 +30,7 @@ impl Vm {
     pub fn run(&mut self, entry : usize) -> Result<Option<RuntimeData>, VmError> {
         self.current.proc_id = entry;
 
+        let mut ret : Option<RuntimeData> = None;
         loop {
             if self.current.proc_id >= self.procs.len() {
                 return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));

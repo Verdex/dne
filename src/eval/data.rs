@@ -35,14 +35,14 @@ pub enum Op {
     RemoveSlot { local: usize, index: usize },
 }
 
-pub struct Fun { // TODO rename proc
+pub struct Proc { 
     pub name : Rc<str>,
     pub instrs : Vec<Op>,
 }
 
 #[derive(Clone)]
 pub struct Frame {
-    pub fun_id : usize,
+    pub proc_id : usize,
     pub ip : usize,
     pub locals : Vec<RuntimeData>,
 }

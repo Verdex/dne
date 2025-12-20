@@ -5,7 +5,7 @@ pub type StackTrace = Vec<(Rc<str>, usize)>;
 
 #[derive(Debug)]
 pub enum VmError {
-    FunDoesNotExist(usize, StackTrace),
+    ProcDoesNotExist(usize, StackTrace),
     InstrPointerOutOfRange(usize, StackTrace),
     AccessMissingReturn(StackTrace),
     AccessMissingLocal(usize, StackTrace),
@@ -24,8 +24,8 @@ impl std::fmt::Display for VmError {
         match self { 
             VmError::LocalUnexpectedType{local, stack_trace, expected, found } => 
                 write!(f, "Local {} was unexpected type.  Expected: {}, but found {}: \n{}", local, expected, found, d(stack_trace) ),
-            VmError::FunDoesNotExist(fun_index, trace) => 
-                write!(f, "Fun Index {} does not exist: \n{}", fun_index, d(trace)),
+            VmError::ProcDoesNotExist(proc_index, trace) => 
+                write!(f, "Proc Index {} does not exist: \n{}", proc_index, d(trace)),
             VmError::InstrPointerOutOfRange(instr, trace) => 
                 write!(f, "Instr Index {} does not exist: \n{}", instr, d(trace)),
             VmError::AccessMissingReturn(trace) => 

@@ -6,7 +6,7 @@ use super::data::*;
 use super::error::*;
 
 pub struct Vm {
-    funs : Vec<Fun>,
+    procs: Vec<Proc>,
     globals: Vec<RuntimeData>,
     frames : Vec<Frame>,
     current : Frame,
@@ -22,26 +22,26 @@ macro_rules! proj {
 }
 
 impl Vm {
-    pub fn new(funs : Vec<Fun>) -> Self {
-        let current = Frame { fun_id: 0, ip: 0, locals: vec![] };
-        Vm { funs, globals: vec![], frames: vec![], current }
+    pub fn new(procs: Vec<Proc>) -> Self {
+        let current = Frame { proc_id: 0, ip: 0, locals: vec![] };
+        Vm { procs, globals: vec![], frames: vec![], current }
     }
 
     pub fn run(&mut self, entry : usize) -> Result<Option<RuntimeData>, VmError> {
-        self.current.fun_id = entry;
+        self.current.proc_id = entry;
 
         loop {
-            if self.current.fun_id >= self.funs.len() {
-                return Err(VmError::FunDoesNotExist(self.current.fun_id, self.stack_trace()));
+            if self.current.proc_id >= self.procs.len() {
+                return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
             }
 
-            if self.current.ip >= self.funs[self.current.fun_id].instrs.len() {
+            if self.current.ip >= self.procs[self.current.proc_id].instrs.len() {
                 // Note:  if the current function isn't pushed onto the return stack, then the
-                // stack trace will leave out the current function where the problem is occurring.
+                // stack trace will leave out the current procedure where the problem is occurring.
                 return Err(VmError::InstrPointerOutOfRange(self.current.ip, self.stack_trace()));
             }
 
-            match self.funs[self.current.fun_id].instrs[self.current.ip] {
+            match self.procs[self.current.proc_id].instrs[self.current.ip] {
                 Op::Call(proc_id, ref params) => {
                     let mut new_locals = vec![];
                     for param in params {
@@ -53,7 +53,7 @@ impl Vm {
                         }
                     }
                     self.current.ip += 1;
-                    let current = std::mem::replace(&mut self.current, Frame { fun_id: proc_id, ip: 0, locals: new_locals });
+                    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
                 Op::DynCall(local, ref params) if local >= self.current.locals.len() => {
@@ -80,7 +80,7 @@ impl Vm {
                         }
                     }
                     self.current.ip += 1;
-                    let current = std::mem::replace(&mut self.current, Frame { fun_id: proc_id, ip: 0, locals: new_locals });
+                    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
                 /*
@@ -310,17 +310,17 @@ impl Vm {
     }
 
     fn stack_trace(&self) -> StackTrace {
-        struct RetAddr { fun : usize, instr : usize }
+        struct RetAddr { proc: usize, instr : usize }
 
-        let mut stack = self.frames.iter().map(|x| RetAddr { fun: x.fun_id, instr: x.ip }).collect::<Vec<_>>();
-        stack.push(RetAddr { fun: self.current.fun_id, instr: self.current.ip + 1});
+        let mut stack = self.frames.iter().map(|x| RetAddr { proc: x.proc_id, instr: x.ip }).collect::<Vec<_>>();
+        stack.push(RetAddr { proc: self.current.proc_id, instr: self.current.ip + 1});
 
         let mut trace = vec![];
         for addr in stack {
-            // Note:  if the function was already pushed into the stack, then
-            // that means that it already resolved to a known function.  Don't
-            // have to check again that the fun map has it.
-            let name = Rc::clone(&self.funs[addr.fun].name);
+            // Note:  if the procedure was already pushed into the stack, then
+            // that means that it already resolved to a known procedure. Don't
+            // have to check again that the proc map has it.
+            let name = Rc::clone(&self.procs[addr.proc].name);
             trace.push((name, addr.instr - 1));
         }
         trace

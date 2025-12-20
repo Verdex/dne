@@ -126,6 +126,7 @@ impl Vm {
                 Op::Closure { proc_id, env } => todo!(),
                 Op::Cons { sym_var, captures } => todo!(),
                 Op::Coroutine { proc_id, params } => todo!(),
+                // TODO fix 
                 Op::DynCoroutine { proc_id, params } => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),

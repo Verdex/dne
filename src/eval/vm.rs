@@ -45,7 +45,7 @@ impl Vm {
                 Op::Call(proc_id, ref params) => {
                     let mut new_locals = vec![];
                     for param in params {
-                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
+                        match get_local(*param, &self.current.locals) {
                             Ok(v) => { new_locals.push(v); },
                             Err(f) => { 
                                 return Err(f(self.stack_trace()));
@@ -72,7 +72,7 @@ impl Vm {
                     };
                     let mut new_locals = vec![];
                     for param in params {
-                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
+                        match get_local(*param, &self.current.locals) {
                             Ok(v) => { new_locals.push(v); },
                             Err(f) => { 
                                 return Err(f(self.stack_trace()));
@@ -313,15 +313,12 @@ impl Vm {
 }
 
 
-fn get_local(index: usize, locals : Cow<Vec<RuntimeData>>) -> Result<RuntimeData, Box<dyn Fn(StackTrace) -> VmError>> {
+fn get_local(index: usize, locals : &[RuntimeData]) -> Result<RuntimeData, Box<dyn Fn(StackTrace) -> VmError>> {
     if index >= locals.len() {
         Err(Box::new(move |trace| VmError::AccessMissingLocal(index, trace)))
     }
     else {
-        match locals {
-            Cow::Borrowed(locals) => Ok(locals[index].clone()),
-            Cow::Owned(mut locals) => Ok(locals.swap_remove(index)),
-        }
+        Ok(locals[index].clone())
     }
 }
 

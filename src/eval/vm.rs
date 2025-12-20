@@ -36,7 +36,7 @@ impl Vm {
             }
 
             if self.current.ip >= self.procs[self.current.proc_id].instrs.len() {
-                // Note:  if the current function isn't pushed onto the return stack, then the
+                // Note:  if the current procedure isn't pushed onto the return stack, then the
                 // stack trace will leave out the current procedure where the problem is occurring.
                 return Err(VmError::InstrPointerOutOfRange(self.current.ip, self.stack_trace()));
             }
@@ -56,18 +56,18 @@ impl Vm {
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
-                Op::DynCall(local, ref params) if local >= self.current.locals.len() => {
+                Op::DynCall(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::DynCall(local, ref params) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => {
-                    return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "Int", found: format!("{:?}", self.current.locals[local]).into() });
+                Op::DynCall(local, _) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => {
+                    return self.local_unexpected_type(local, "Int");
                 },
                 Op::DynCall(local, ref params) => {
                     let proc_id = {
                         let proc_id = proj!(self.current.locals[local], RuntimeData::Int(x), x); 
                         match usize::try_from(proc_id) {
                             Ok(v) => v, 
-                            Err(_) => { return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "proc_id", found: "non-usizeable value".into() }); },
+                            Err(_) => { return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "proc_id", found: format!("{:?}", self.current.locals[local]).into() }); },
                         }
                     };
                     let mut new_locals = vec![];

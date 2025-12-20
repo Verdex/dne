@@ -111,38 +111,6 @@ impl Vm {
                 Op::Branch(_) => { 
                     self.current.ip += 1;
                 },
-                Op::Call(fun_index, ref params) => {
-                    let mut new_locals = vec![];
-                    for param in params {
-                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
-                            Ok(v) => { new_locals.push(v); },
-                            Err(f) => { 
-                                return Err(f(self.stack_trace()));
-                            },
-                        }
-                    }
-                    self.current.ip += 1;
-                    let current = std::mem::replace(&mut self.current, Frame { fun_id: fun_index, ip: 0, ret: None, branch: false, dyn_call: None, locals: new_locals, coroutines: vec![] });
-                    self.frames.push(current);
-                },
-                Op::DynCall(ref params) if self.current.dyn_call.is_some() => {
-                    let mut new_locals = vec![];
-                    for param in params {
-                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
-                            Ok(v) => { new_locals.push(v); },
-                            Err(f) => { 
-                                return Err(f(self.stack_trace()));
-                            },
-                        }
-                    }
-                    let target_fun_id = self.current.dyn_call.unwrap();
-                    self.current.ip += 1;
-                    let current = std::mem::replace(&mut self.current, Frame { fun_id: target_fun_id, ip: 0, ret: None, branch: false, dyn_call: None, locals: new_locals, coroutines: vec![] });
-                    self.frames.push(current);
-                },
-                Op::DynCall(_) => {
-                    return Err(VmError::DynFunDoesNotExist(self.stack_trace()));
-                },
                 Op::ReturnLocal(slot) => {
                     let current_locals = std::mem::replace(&mut self.current.locals, vec![]);
 

@@ -59,8 +59,17 @@ impl Vm {
                 Op::DynCall(local, ref params) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
+                Op::DynCall(local, ref params) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => {
+                    return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "Int", found: format!("{:?}", self.current.locals[local]).into() });
+                },
                 Op::DynCall(local, ref params) => {
-                    let proc_id = 0; // TODO get the local and it had better be a number
+                    let proc_id = {
+                        let proc_id = proj!(self.current.locals[local], RuntimeData::Int(x), x); 
+                        match usize::try_from(proc_id) {
+                            Ok(v) => v, 
+                            Err(_) => { return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "proc_id", found: "non-usizeable value".into() }); },
+                        }
+                    };
                     let mut new_locals = vec![];
                     for param in params {
                         match get_local(*param, Cow::Borrowed(&self.current.locals)) {

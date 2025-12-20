@@ -87,10 +87,10 @@ impl Vm {
                 Op::Jump(label) => {
                     self.current.ip = label;
                 },
-                Op::BranchEqual { local, .. } if local >= self.current.locals.len()  => {
+                Op::BranchEqual { local, .. } if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::BranchEqual { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) )  => {
+                Op::BranchEqual { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) ) => {
                     return self.local_unexpected_type(local, "bool");
                 },
                 Op::BranchEqual { label, local } => {
@@ -119,12 +119,6 @@ impl Vm {
                 */
                 _ => todo!(),
                 /*
-                Op::Branch(target) if self.current.branch => {
-                    self.current.ip = target;
-                },
-                Op::Branch(_) => { 
-                    self.current.ip += 1;
-                },
                 Op::ReturnLocal(slot) => {
                     let current_locals = std::mem::replace(&mut self.current.locals, vec![]);
 

@@ -32,9 +32,40 @@ impl Vm {
                 return Err(VmError::InstrPointerOutOfRange(self.current.ip, self.stack_trace()));
             }
 
-            match &self.funs[self.current.fun_id].instrs[self.current.ip] {
-                Op::Call(proc_id, params) => todo!(),
-                Op::DynCall(local, params) => todo!(),
+            match self.funs[self.current.fun_id].instrs[self.current.ip] {
+                Op::Call(proc_id, ref params) => {
+                    let mut new_locals = vec![];
+                    for param in params {
+                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
+                            Ok(v) => { new_locals.push(v); },
+                            Err(f) => { 
+                                return Err(f(self.stack_trace()));
+                            },
+                        }
+                    }
+                    self.current.ip += 1;
+                    let current = std::mem::replace(&mut self.current, Frame { fun_id: proc_id, ip: 0, locals: new_locals });
+                    self.frames.push(current);
+                },
+                Op::DynCall(local, ref params) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::DynCall(local, ref params) => {
+                    let proc_id = 0; // TODO get the local and it had better be a number
+                    let mut new_locals = vec![];
+                    for param in params {
+                        match get_local(*param, Cow::Borrowed(&self.current.locals)) {
+                            Ok(v) => { new_locals.push(v); },
+                            Err(f) => { 
+                                return Err(f(self.stack_trace()));
+                            },
+                        }
+                    }
+                    self.current.ip += 1;
+                    let current = std::mem::replace(&mut self.current, Frame { fun_id: proc_id, ip: 0, locals: new_locals });
+                    self.frames.push(current);
+                },
+                /*
                 Op::Resume(local) => todo!(),
                 Op::ReturnLocal(local) => todo!(), 
                 Op::Jump(label) => todo!(),
@@ -53,6 +84,8 @@ impl Vm {
                 Op::Break => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),
                 Op::RemoveSlot { local, index } => todo!(),
+                */
+                _ => todo!(),
                 /*
                 Op::Branch(target) if self.current.branch => {
                     self.current.ip = target;
@@ -276,7 +309,7 @@ impl Vm {
     }
 }
 
-fn get_local<T : Clone>(index: usize, locals : Cow<Vec<T>>) -> Result<T, Box<dyn Fn(StackTrace) -> VmError>> {
+fn get_local(index: usize, locals : Cow<Vec<RuntimeData>>) -> Result<RuntimeData, Box<dyn Fn(StackTrace) -> VmError>> {
     if index >= locals.len() {
         Err(Box::new(move |trace| VmError::AccessMissingLocal(index, trace)))
     }

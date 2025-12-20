@@ -12,6 +12,15 @@ pub struct Vm {
     current : Frame,
 }
 
+macro_rules! proj {
+    ($input:expr, $p:pat, $output:expr) => {
+        match $input {
+            $p => $output,
+            _ => panic!("proj failed"),
+        }
+    }
+}
+
 impl Vm {
     pub fn new(funs : Vec<Fun>) -> Self {
         let current = Frame { fun_id: 0, ip: 0, locals: vec![] };

@@ -93,7 +93,10 @@ impl Vm {
                     return self.local_unexpected_type(local, "bool");
                 },
                 Op::BranchEqual { label, local } => {
-
+                    let test = proj!(self.current.locals[local], RuntimeData::Bool(x), x);
+                    if test {
+                        self.current.ip = label;
+                    }
                 },
                 /*
                 Op::Resume(local) => todo!(),

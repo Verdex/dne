@@ -99,9 +99,24 @@ impl Vm {
                         self.current.ip = label;
                     }
                 },
+                Op::ReturnLocal(local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::ReturnLocal(local) => {
+                    ret = Some(self.current.locals.swap_remove(local));
+
+                    match self.frames.pop() {
+                        // Note:  if the stack is empty then all execution is finished
+                        None => {
+                            return Ok(ret);
+                        },
+                        Some(frame) => {
+                            self.current = frame;
+                        },
+                    }
+                },
                 /*
                 Op::Resume(local) => todo!(),
-                Op::ReturnLocal(local) => todo!(), 
                 Op::SetLocalData(local, data) => todo!(),
                 Op::SetLocalReturn(local) => todo!(),
                 Op::SetLocalVar { src, dest } => todo!(),
@@ -119,39 +134,6 @@ impl Vm {
                 */
                 _ => todo!(),
                 /*
-                Op::ReturnLocal(slot) => {
-                    let current_locals = std::mem::replace(&mut self.current.locals, vec![]);
-
-                    let ret_target = match get_local(slot, Cow::Owned(current_locals)) {
-                        Ok(v) => v,
-                        Err(f) => { 
-                            return Err(f(self.stack_trace()));
-                        },
-                    };
-
-                    match self.frames.pop() {
-                        // Note:  if the stack is empty then all execution is finished
-                        None => {
-                            return Ok(Some(ret_target));
-                        },
-                        Some(frame) => {
-                            self.current = frame;
-                            self.current.ret = Some(ret_target);
-                        },
-                    }
-                },
-                Op::Return => {
-                    match self.frames.pop() {
-                        // Note:  if the stack is empty then all execution is finished
-                        None => {
-                            return Ok(None);
-                        },
-                        Some(frame) => {
-                            self.current = frame;
-                            self.current.ret = None;
-                        },
-                    }
-                },
                 Op::CoYield(slot) => {
 
                     let ret_target = match get_local(slot, Cow::Borrowed(&self.current.locals)) {

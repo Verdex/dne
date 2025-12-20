@@ -67,7 +67,7 @@ impl Vm {
                         let proc_id = proj!(self.current.locals[local], RuntimeData::Int(x), x); 
                         match usize::try_from(proc_id) {
                             Ok(v) => v, 
-                            Err(_) => { return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "proc_id", found: format!("{:?}", self.current.locals[local]).into() }); },
+                            Err(_) => { return self.local_unexpected_type(local, "proc_id"); },
                         }
                     };
                     let mut new_locals = vec![];
@@ -90,7 +90,7 @@ impl Vm {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
                 Op::BranchEqual { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) )  => {
-                    return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected: "bool", found: format!("{:?}", self.current.locals[local]).into() });
+                    return self.local_unexpected_type(local, "bool");
                 },
                 Op::BranchEqual { label, local } => {
 
@@ -303,7 +303,12 @@ impl Vm {
         }
         trace
     }
+
+    fn local_unexpected_type<T>(&self, local : usize, expected : &'static str) -> Result<T, VmError> {
+        return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected, found: format!("{:?}", self.current.locals[local]).into() });
+    }
 }
+
 
 fn get_local(index: usize, locals : Cow<Vec<RuntimeData>>) -> Result<RuntimeData, Box<dyn Fn(StackTrace) -> VmError>> {
     if index >= locals.len() {

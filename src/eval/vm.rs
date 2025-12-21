@@ -1,5 +1,4 @@
 
-use std::borrow::Cow;
 use std::rc::Rc;
 
 use super::data::*;
@@ -28,14 +27,14 @@ impl Vm {
     }
 
     pub fn run(&mut self, entry : usize) -> Result<Option<RuntimeData>, VmError> {
+        if entry >= self.procs.len() {
+            return Err(VmError::ProcDoesNotExist(entry, self.stack_trace()));
+        }
+
         self.current.proc_id = entry;
 
         let mut ret : Option<RuntimeData> = None;
         loop {
-            if self.current.proc_id >= self.procs.len() {
-                return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
-            }
-
             if self.current.ip >= self.procs[self.current.proc_id].instrs.len() {
                 // Note:  if the current procedure isn't pushed onto the return stack, then the
                 // stack trace will leave out the current procedure where the problem is occurring.
@@ -43,6 +42,9 @@ impl Vm {
             }
 
             match self.procs[self.current.proc_id].instrs[self.current.ip] {
+                Op::Call(proc_id, _) if proc_id >= self.procs.len() => {
+                    return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
+                },
                 Op::Call(proc_id, ref params) => {
                     let mut new_locals = vec![];
                     for param in params {
@@ -53,6 +55,7 @@ impl Vm {
                             },
                         }
                     }
+                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params.len()).collect());
                     self.current.ip += 1;
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
@@ -116,10 +119,15 @@ impl Vm {
                     }
                 },
                 /*
-                Op::Resume(local) => todo!(),
-                Op::SetLocalData(local, data) => todo!(),
+                Op::SetLocalData(local, data) => 
+                Op::SetLocalData(local, data) => {
+                    
+                },
                 Op::SetLocalReturn(local) => todo!(),
                 Op::SetLocalVar { src, dest } => todo!(),
+                */
+                /*
+                Op::Resume(local) => todo!(),
                 Op::GetLength(local) => todo!(),
                 Op::GetType(local) => todo!(),
                 Op::GetSlot { local, index } => todo!(),

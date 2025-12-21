@@ -8,6 +8,7 @@ pub enum RuntimeData {
     Float(f64),
     Symbol(Rc<str>),
     Ref(usize),
+    Nil,
     // TODO closure, coroutine, string
 }
 
@@ -40,6 +41,7 @@ pub enum Op {
 pub struct Proc { 
     pub name : Rc<str>,
     pub instrs : Vec<Op>,
+    pub stack_size : usize,
 }
 
 #[derive(Clone)]

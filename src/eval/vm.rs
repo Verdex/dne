@@ -123,19 +123,29 @@ impl Vm {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
                 Op::SetLocalData(local, ref data) => {
-                    todo!()
+                    self.current.locals[local] = data.clone();
+                    self.current.ip += 1;
+                },
+                Op::SetLocalReturn(_) if ret.is_none()  => {
+                    return Err(VmError::AccessMissingReturn(self.stack_trace()));
                 },
                 Op::SetLocalReturn(local) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::SetLocalReturn(local) => todo!(),
+                Op::SetLocalReturn(local) => {
+                    self.current.locals[local] = ret.as_ref().unwrap().clone();
+                    self.current.ip += 1;
+                },
                 Op::SetLocalVar { src, .. } if src >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(src, self.stack_trace()));
                 },
                 Op::SetLocalVar { dest, .. } if dest >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(dest, self.stack_trace()));
                 },
-                Op::SetLocalVar { src, dest } => todo!(),
+                Op::SetLocalVar { src, dest } => {
+                    self.current.locals[dest] = self.current.locals[src].clone();
+                    self.current.ip += 1;
+                },
                 /*
                 Op::Resume(local) => todo!(),
                 Op::GetLength(local) => todo!(),

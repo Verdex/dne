@@ -146,20 +146,21 @@ impl Vm {
                     self.current.locals[dest] = self.current.locals[src].clone();
                     self.current.ip += 1;
                 },
+                Op::Cons { sym_var, captures } => todo!(),
                 /*
-                Op::Resume(local) => todo!(),
+                Op::InsertSlot { dest, src, index } => todo!(),
+                Op::RemoveSlot { local, index } => todo!(),
                 Op::GetLength(local) => todo!(),
                 Op::GetType(local) => todo!(),
                 Op::GetSlot { local, index } => todo!(),
+
+                Op::Resume(local) => todo!(),
                 Op::Closure { proc_id, env } => todo!(),
-                Op::Cons { sym_var, captures } => todo!(),
                 Op::Coroutine { proc_id, params } => todo!(),
                 // TODO fix 
                 Op::DynCoroutine { proc_id, params } => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),
-                Op::InsertSlot { dest, src, index } => todo!(),
-                Op::RemoveSlot { local, index } => todo!(),
                 */
                 _ => todo!(),
                 /*

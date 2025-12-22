@@ -28,7 +28,7 @@ pub enum Op {
     GetType(usize),
     GetSlot { local: usize, index: usize },
     Closure { proc_id: usize, env: Vec<usize> },
-    Cons { sym_var: usize, captures: Vec<usize> },
+    Cons { sym_var: usize, params: Vec<usize> },
     Coroutine { proc_id: usize, params: Vec<usize> },
     // TODO proc_id for dyn coroutine has to be a local that is a coroutine
     DynCoroutine { proc_id: usize, params: Vec<usize> },

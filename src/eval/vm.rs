@@ -254,44 +254,7 @@ impl Vm {
                 Op::CoSwap(_, b) => {
                     return Err(VmError::AccessMissingCoroutine(b, self.stack_trace()));
                 },
-                Op::Drop(local) if local < self.current.locals.len() => {
-                    self.current.locals.remove(local);
-                    self.current.ip += 1;
-                },
-                Op::Drop(local) => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Dup(local) if local < self.current.locals.len() => {
-                    let target = self.current.locals[local].clone();
-                    self.current.locals.push(target);
-                    self.current.ip += 1;
-                },
-                Op::Dup(local) => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Swap(a, b) if a < self.current.locals.len() && b < self.current.locals.len() => {
-                    self.current.locals.swap(a, b);
-                    self.current.ip += 1;
-                },
-                Op::Swap(a, b) if b < self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(a, self.stack_trace()));
-                },
-                Op::Swap(_, b) => {
-                    return Err(VmError::AccessMissingLocal(b, self.stack_trace()));
-                },
-                Op::PushRet if self.current.ret.is_some() => {
-                    let ret = std::mem::replace(&mut self.current.ret, None);
-                    self.current.locals.push(ret.unwrap());
-                    self.current.ret = None;
-                    self.current.ip += 1;
-                },
-                Op::PushRet => {
-                    return Err(VmError::AccessMissingReturn(self.stack_trace()));
-                },
-                Op::PushLocal(ref t) => {
-                    self.current.locals.push(t.clone());
-                    self.current.ip += 1;
-                }*/
+                */
             }
         }
     }

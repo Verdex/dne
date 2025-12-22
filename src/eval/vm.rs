@@ -119,14 +119,23 @@ impl Vm {
                         },
                     }
                 },
-                /*
-                Op::SetLocalData(local, data) => 
-                Op::SetLocalData(local, data) => {
-                    
+                Op::SetLocalData(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::SetLocalData(local, ref data) => {
+                    todo!()
+                },
+                Op::SetLocalReturn(local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
                 Op::SetLocalReturn(local) => todo!(),
+                Op::SetLocalVar { src, .. } if src >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(src, self.stack_trace()));
+                },
+                Op::SetLocalVar { dest, .. } if dest >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(dest, self.stack_trace()));
+                },
                 Op::SetLocalVar { src, dest } => todo!(),
-                */
                 /*
                 Op::Resume(local) => todo!(),
                 Op::GetLength(local) => todo!(),

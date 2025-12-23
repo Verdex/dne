@@ -146,8 +146,8 @@ impl Vm {
                     self.current.locals[dest] = self.current.locals[src].clone();
                     self.current.ip += 1;
                 },
-                Op::Cons { sym_var, ref params } => todo!(),
                 /*
+                Op::Cons { sym_var, ref params } => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),
                 Op::RemoveSlot { local, index } => todo!(),
                 Op::GetLength(local) => todo!(),

@@ -24,8 +24,23 @@ impl std::error::Error for ParseError { }
 
 #[derive(Debug)]
 pub enum Top {
-    Global { name: Rc<str>, ttype: Type, value: Lit },
-    Proc { name: Rc<str>, params: Vec<(Rc<str>, Type)>, return_type : Type, body : Vec<Stmt> },
+    Global(Global),
+    Proc(Proc),
+}
+
+#[derive(Debug)]
+pub struct Global {
+    pub name: Rc<str>, 
+    pub ttype: Type,
+    pub value: Lit,
+}
+
+#[derive(Debug)]
+pub struct Proc {
+    pub name: Rc<str>, 
+    pub params: Vec<(Rc<str>, Type)>, 
+    pub return_type : Type, 
+    pub body : Vec<Stmt>,
 }
 
 #[derive(Debug)]
@@ -102,7 +117,7 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
             input.expect(|x| x.eq(&Token::Equal))?;
             let value = parse_lit(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Top::Global { name, ttype, value });
+            ret.push(Top::Global(Global{ name, ttype, value }));
         }
         else {
             let (s, e) = input.current()?;
@@ -140,7 +155,7 @@ fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
     input.expect(|x| x.eq(&Token::LCurl))?;
     let body = parse_stmts(input)?;
     input.expect(|x| x.eq(&Token::RCurl))?;
-    Ok( Top::Proc { name, params, return_type, body } )
+    Ok( Top::Proc(Proc{ name, params, return_type, body }))
 }
 
 fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {

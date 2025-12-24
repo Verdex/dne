@@ -78,6 +78,13 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         }
     }
 
+    fn c<'a, 'b>(proc_map: &'b ProcMap<'a>, caller_proc_name: &Rc<str>, callee_proc_name: &Rc<str>) -> Result<&'b (&'a PProc, usize), CompileError> {
+        match proc_map.get(callee_proc_name) {
+            Some(t) => Ok(t),
+            None => Err(CompileError::AccessMissingProc { caller_proc: Rc::clone(caller_proc_name), callee_proc: Rc::clone(callee_proc_name) }),
+        }
+    }
+
     match stmt {
         Stmt::Jump(x) => Ok(vec![LOp::Jump(Rc::clone(x))]),
         Stmt::BranchEqual { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),

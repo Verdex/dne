@@ -50,6 +50,12 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         stmts.push(compile_stmt(proc, stmt, proc_map, &mut l_map)?);
     }
 
+    let label_map : LabelMap = HashMap::from_iter(stmts.iter().flatten().enumerate().filter_map(|(index, op)| match op {
+        LOp::Label(x) => Some((Rc::clone(x), index)),
+        _ => None,
+    }));
+
+
     // TODO clean up the whole LOp thing
 
     todo!()

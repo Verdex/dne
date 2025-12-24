@@ -36,6 +36,7 @@ pub enum Op {
     Break,
     InsertSlot { dest: usize, src: usize, index: usize },
     RemoveSlot { local: usize, index: usize },
+    Nop,
 }
 
 pub struct Proc { 

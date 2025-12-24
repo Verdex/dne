@@ -56,11 +56,11 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         _ => None,
     }));
 
-    let body = stmts.into_iter().flatten().map(|op| match op {
+    let instrs = stmts.into_iter().flatten().map(|op| match op {
         LOp::Op(x) => Ok(x),
         LOp::Label(_) => Ok(Op::Nop),
         LOp::Branch { label, var } if label_map.contains_key(&label) => {
-            let local = a(&l_map, &var, &proc.name, &Type::Bool)?;
+            let local = access(&l_map, &var, &proc.name, &Type::Bool)?;
             Ok(Op::BranchEqual { local, label: *label_map.get(&label).unwrap() })
         },
         LOp::Branch { label, .. } => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label }),
@@ -81,7 +81,7 @@ enum LOp {
     Jump(Rc<str>),
 }
 
-fn a(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Type) -> Result<usize, CompileError> {
+fn access(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Type) -> Result<usize, CompileError> {
     match l_map.get(local) {
         Some((found_type, _)) if !expected_type.eq( found_type ) => Err(CompileError::TypeMismatch { 
             proc: Rc::clone(proc_name),
@@ -109,21 +109,21 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Jump(x) => Ok(vec![LOp::Jump(Rc::clone(x))]),
         Stmt::BranchEqual { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),
         Stmt::Label(x) => Ok(vec![LOp::Label(Rc::clone(x))]),
-        Stmt::Return(local) => s(Op::ReturnLocal(a(l_map, local, &proc.name, &proc.return_type)?)),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Int(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Int(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Float(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Float(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))),
+        Stmt::Return(local) => s(Op::ReturnLocal(access(l_map, local, &proc.name, &proc.return_type)?)),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Int(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Int(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Float(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Float(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))),
         Stmt::Set { var, ttype, val: Expr::Call { name, params } } => {
             let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
-            let local_index = a(l_map, &var, &proc.name, &callee_proc.return_type)?;
+            let local_index = access(l_map, &var, &proc.name, &callee_proc.return_type)?;
 
             if params.len() != callee_proc.params.len() {
                 return Err(CompileError::ProcCallArityMismatch { caller_proc: Rc::clone(&proc.name), callee_proc: Rc::clone(&callee_proc.name) });
             }
 
             let local_indices = params.iter().zip(callee_proc.params.iter())
-                         .map(|(local, (_, ttype))| a(l_map, local, &proc.name, ttype))
+                         .map(|(local, (_, ttype))| access(l_map, local, &proc.name, ttype))
                          .collect::<Result<Vec<_>, CompileError>>()?;
 
             Ok(vec![LOp::Op(Op::Call(*callee_index, local_indices)), 
@@ -131,8 +131,8 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
                     ])
         },
         Stmt::Set { var, ttype, val: Expr::Var(src) } => {
-            let src = a(l_map, &src, &proc.name, ttype)?;
-            let dest = a(l_map, &var, &proc.name, ttype)?;
+            let src = access(l_map, &src, &proc.name, ttype)?;
+            let dest = access(l_map, &var, &proc.name, ttype)?;
 
             s(Op::SetLocalVar { src, dest })
         },

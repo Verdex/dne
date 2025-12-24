@@ -33,6 +33,7 @@ pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
 
     let ret = procs.into_iter().map(|x| compile_proc(x, &proc_map)).collect::<Result<Vec<_>, _>>();
     
+    
     ret
 }
 
@@ -45,6 +46,8 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
     for stmt in &proc.body {
         stmts.push(compile_stmt(proc, stmt, proc_map, &mut l_map)?);
     }
+
+    // TODO clean up the whole LOp thing
 
     todo!()
 }
@@ -72,14 +75,18 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Jump(x) => Ok(vec![LOp::Jump(Rc::clone(x))]),
         Stmt::BranchEqual { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),
         Stmt::Label(x) => Ok(vec![LOp::Label(Rc::clone(x))]),
-        Stmt::Return(local) => {
-            let local = a(l_map, local, &proc.name, &proc.return_type)?;
-            s(Op::ReturnLocal(local))
+        Stmt::Return(local) => s(Op::ReturnLocal(a(l_map, local, &proc.name, &proc.return_type)?)),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Int(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Int(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Float(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Float(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))),
+        Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))),
+        Stmt::Set { var, ttype, val: Expr::Call { name, params } } => {
+            // TODO 
+            // get number out of proc map (TODO make 'a' like function)
+            // foreach p in params { a(p) } into vec
+            // Op call
+            // op set local from return
         },
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Int(x)) } => { s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Int(*x))) },
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Float(x)) } => { s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Float(*x))) },
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => { s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))) },
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => { s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))) },
         _ => todo!(),
     }
     // TODO
@@ -95,6 +102,8 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     /*
 
     Call { name : Rc<str>, params : Vec<Rc<str>> },
+    Var(Rc<str>),
+
     DynCall { name : Rc<str>, params : Vec<Rc<str>> },
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
@@ -103,7 +112,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Resume(Rc<str>),
     Length(Rc<str>),
     Type(Rc<str>),
-    Var(Rc<str>),
     Slot { var: Rc<str>, index: usize },
     */
 }

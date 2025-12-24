@@ -12,6 +12,9 @@ type LabelMap = HashMap<Rc<str>, usize>;
 #[derive(Debug)]
 pub enum CompileError {
     AccessMissingLocal { proc: Rc<str>, local: Rc<str> },
+    AccessMissingProc { caller_proc: Rc<str>, callee_proc: Rc<str> },
+    ProcCallArityMismatch { caller_proc: Rc<str>, callee_proc: Rc<str> },
+    TypeMismatch { proc: Rc<str>, expected: Rc<str>, found : Rc<str> },
 }
 
 pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {

@@ -95,12 +95,26 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))),
         Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => s(Op::SetLocalData(a(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))),
         Stmt::Set { var, ttype, val: Expr::Call { name, params } } => {
-            // TODO 
-            // get number out of proc map (TODO make 'a' like function)
-            // foreach p in params { a(p) } into vec
-            // Op call
-            // op set local from return
-            todo!()
+            let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
+            let local_index = a(l_map, &var, &proc.name, &callee_proc.return_type)?;
+
+            if params.len() != callee_proc.params.len() {
+                return Err(CompileError::ProcCallArityMismatch { caller_proc: Rc::clone(&proc.name), callee_proc: Rc::clone(&callee_proc.name) });
+            }
+
+            let local_indices = params.iter().zip(callee_proc.params.iter())
+                         .map(|(local, (_, ttype))| a(l_map, local, &proc.name, ttype))
+                         .collect::<Result<Vec<_>, CompileError>>()?;
+
+            Ok(vec![LOp::Op(Op::Call(*callee_index, local_indices)), 
+                    LOp::Op(Op::SetLocalReturn(local_index))
+                    ])
+        },
+        Stmt::Set { var, ttype, val: Expr::Var(src) } => {
+            let src = a(l_map, &src, &proc.name, ttype)?;
+            let dest = a(l_map, &var, &proc.name, ttype)?;
+
+            s(Op::SetLocalVar { src, dest })
         },
         _ => todo!(),
     }

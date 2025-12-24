@@ -86,6 +86,7 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             // foreach p in params { a(p) } into vec
             // Op call
             // op set local from return
+            todo!()
         },
         _ => todo!(),
     }

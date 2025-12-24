@@ -13,6 +13,7 @@ type LabelMap = HashMap<Rc<str>, usize>;
 pub enum CompileError {
     AccessMissingLocal { proc: Rc<str>, local: Rc<str> },
     AccessMissingProc { caller_proc: Rc<str>, callee_proc: Rc<str> },
+    AccessMissingLabel { proc: Rc<str>, label: Rc<str> },
     ProcCallArityMismatch { caller_proc: Rc<str>, callee_proc: Rc<str> },
     TypeMismatch { proc: Rc<str>, expected: Rc<str>, found : Rc<str> },
 }
@@ -55,6 +56,18 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         _ => None,
     }));
 
+    let body = stmts.into_iter().flatten().map(|op| match op {
+        LOp::Op(x) => Ok(x),
+        LOp::Label(_) => Ok(Op::Nop),
+        LOp::Branch { label, var } if label_map.contains_key(&label) => {
+            let local = a(&l_map, &var, &proc.name, &Type::Bool)?;
+            Ok(Op::BranchEqual { local, label: *label_map.get(&label).unwrap() })
+        },
+        LOp::Branch { label, .. } => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label }),
+        LOp::Jump(x) if label_map.contains_key(&x) => Ok(Op::Jump(*label_map.get(&x).unwrap())),
+        LOp::Jump(x) => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label: x}),
+    }).collect::<Result<Vec<_>, CompileError>>()?;
+
 
     // TODO clean up the whole LOp thing
 
@@ -68,21 +81,22 @@ enum LOp {
     Jump(Rc<str>),
 }
 
+fn a(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Type) -> Result<usize, CompileError> {
+    match l_map.get(local) {
+        Some((found_type, _)) if !expected_type.eq( found_type ) => Err(CompileError::TypeMismatch { 
+            proc: Rc::clone(proc_name),
+            expected: format!("{:?}", expected_type).into(),
+            found: format!("{:?}", found_type).into()
+        }),
+        Some((_, t)) => Ok(*t),
+        None => Err(CompileError::AccessMissingLocal { proc: Rc::clone(proc_name), local: Rc::clone(local) }),
+    }
+}
+
 fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LMap) -> Result<Vec<LOp>, CompileError> {
     
     fn s(x : Op) -> Result<Vec<LOp>, CompileError> { Ok(vec![LOp::Op(x)]) }
 
-    fn a(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Type) -> Result<usize, CompileError> {
-        match l_map.get(local) {
-            Some((found_type, _)) if !expected_type.eq( found_type ) => Err(CompileError::TypeMismatch { 
-                proc: Rc::clone(proc_name),
-                expected: format!("{:?}", expected_type).into(),
-                found: format!("{:?}", found_type).into()
-            }),
-            Some((_, t)) => Ok(*t),
-            None => Err(CompileError::AccessMissingLocal { proc: Rc::clone(proc_name), local: Rc::clone(local) }),
-        }
-    }
 
     fn c<'a, 'b>(proc_map: &'b ProcMap<'a>, caller_proc_name: &Rc<str>, callee_proc_name: &Rc<str>) -> Result<&'b (&'a PProc, usize), CompileError> {
         match proc_map.get(callee_proc_name) {

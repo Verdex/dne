@@ -130,8 +130,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     // TODO
     /*
 
-    Var(Rc<str>),
-
     DynCall { name : Rc<str>, params : Vec<Rc<str>> },
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },

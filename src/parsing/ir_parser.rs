@@ -56,7 +56,7 @@ pub enum Stmt {
     SlotRemove { var: Rc<str>, index: usize },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Int,
     Float,

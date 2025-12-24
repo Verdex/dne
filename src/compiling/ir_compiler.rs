@@ -6,7 +6,7 @@ use crate::parsing::ir_parser::{Lit, Expr, Type, Stmt, Top, Proc as PProc, Globa
 use crate::eval::data::*;
 
 type ProcMap<'a> = HashMap<Rc<str>, (&'a PProc, usize)>;
-type LMap<'a> = HashMap<Rc<str>, (&'a Type, usize)>;
+type LMap = HashMap<Rc<str>, (Type, usize)>;
 type LabelMap = HashMap<Rc<str>, usize>;
 
 #[derive(Debug)]
@@ -43,7 +43,11 @@ pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
 
 fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError> {
 
-    let mut l_map : LMap = HashMap::from_iter(proc.params.iter().enumerate().map(|(i, (name, ttype))| (Rc::clone(name), (ttype, i))));
+    let mut l_map : LMap = HashMap::from_iter(
+        proc.params.iter().map(|(name, ttype)| (Rc::clone(name), *ttype))
+        .chain(proc.body.iter().filter_map(|stmt| match stmt { Stmt::Set { var, ttype, .. } => Some((Rc::clone(var), *ttype)), _ => None} ))
+        .enumerate()
+        .map(|(i, (name, ttype))| (Rc::clone(&name), (ttype, i))));
     let mut label_map : LabelMap = HashMap::new();
 
     let mut stmts = vec![];
@@ -96,7 +100,6 @@ fn access(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Ty
 fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LMap) -> Result<Vec<LOp>, CompileError> {
     
     fn s(x : Op) -> Result<Vec<LOp>, CompileError> { Ok(vec![LOp::Op(x)]) }
-
 
     fn c<'a, 'b>(proc_map: &'b ProcMap<'a>, caller_proc_name: &Rc<str>, callee_proc_name: &Rc<str>) -> Result<&'b (&'a PProc, usize), CompileError> {
         match proc_map.get(callee_proc_name) {

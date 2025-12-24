@@ -68,7 +68,11 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
 
     fn a(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Type) -> Result<usize, CompileError> {
         match l_map.get(local) {
-            // TODO make sure expected type matches this local type
+            Some((found_type, _)) if !expected_type.eq( found_type ) => Err(CompileError::TypeMismatch { 
+                proc: Rc::clone(proc_name),
+                expected: format!("{:?}", expected_type).into(),
+                found: format!("{:?}", found_type).into()
+            }),
             Some((_, t)) => Ok(*t),
             None => Err(CompileError::AccessMissingLocal { proc: Rc::clone(proc_name), local: Rc::clone(local) }),
         }

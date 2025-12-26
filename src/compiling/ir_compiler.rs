@@ -48,7 +48,6 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         .chain(proc.body.iter().filter_map(|stmt| match stmt { Stmt::Set { var, ttype, .. } => Some((Rc::clone(var), *ttype)), _ => None} ))
         .enumerate()
         .map(|(i, (name, ttype))| (Rc::clone(&name), (ttype, i))));
-    let mut label_map : LabelMap = HashMap::new();
 
     let mut stmts = vec![];
     for stmt in &proc.body {
@@ -72,10 +71,8 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         LOp::Jump(x) => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label: x}),
     }).collect::<Result<Vec<_>, CompileError>>()?;
 
-
-    // TODO clean up the whole LOp thing
-
-    todo!()
+    let stack_size = l_map.values().map(|(_, x)| *x).max().unwrap_or(0);
+    Ok(Proc { name: Rc::clone(&proc.name), instrs, stack_size })
 }
 
 enum LOp {

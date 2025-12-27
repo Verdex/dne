@@ -27,6 +27,19 @@ proc main() -> Int {
 }
 
 #[test]
+fn should_return_symbol() {
+    let input = r"
+proc main() -> Symbol {
+    set x : Symbol = ~symbol;
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Symbol(x), x);
+    assert_eq!(*output, *"symbol");
+}
+
+#[test]
 fn should_return_bool() {
     let input = r"
 proc main() -> Bool {
@@ -37,4 +50,17 @@ proc main() -> Bool {
 
     let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
     assert_eq!(output, true);
+}
+
+#[test]
+fn should_return_float() {
+    let input = r"
+proc main() -> Float {
+    set x : Float = 18.01E-5;
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Float(x), x);
+    assert_eq!(output, 18.01E-5);
 }

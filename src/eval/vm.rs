@@ -25,6 +25,7 @@ impl Vm {
         }
 
         self.current.proc_id = entry;
+        self.current.locals = std::iter::repeat(RuntimeData::Nil).take(self.procs[entry].stack_size).collect();
 
         let mut ret : Option<RuntimeData> = None;
         loop {

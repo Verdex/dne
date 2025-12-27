@@ -110,11 +110,11 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::BranchEqual { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),
         Stmt::Label(x) => Ok(vec![LOp::Label(Rc::clone(x))]),
         Stmt::Return(local) => s(Op::ReturnLocal(access(l_map, local, &proc.name, &proc.return_type)?)),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Int(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Int(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Float(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Float(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::Bool(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Bool(*x))),
-        Stmt::Set { var, ttype, val: Expr::Lit(Lit::ConsType(x)) } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &ttype)?, RuntimeData::Symbol(Rc::clone(x)))),
-        Stmt::Set { var, ttype, val: Expr::Call { name, params } } => {
+        Stmt::Set { var, val: Expr::Lit(Lit::Int(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Int)?, RuntimeData::Int(*x))),
+        Stmt::Set { var, val: Expr::Lit(Lit::Float(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Float)?, RuntimeData::Float(*x))),
+        Stmt::Set { var, val: Expr::Lit(Lit::Bool(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Bool)?, RuntimeData::Bool(*x))),
+        Stmt::Set { var, val: Expr::Lit(Lit::ConsType(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Symbol)?, RuntimeData::Symbol(Rc::clone(x)))),
+        Stmt::Set { var, val: Expr::Call { name, params }, .. } => {
             let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
             let local_index = access(l_map, &var, &proc.name, &callee_proc.return_type)?;
 

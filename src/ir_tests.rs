@@ -6,7 +6,7 @@ use crate::eval::data::*;
 use crate::eval::vm::*;
 
 fn test(input : &str) -> Option<RuntimeData> {
-    let ir = parse("").unwrap();
+    let ir = parse(input).unwrap();
     let procs = compile(&ir).unwrap();
     let main = procs.iter().enumerate().find(|(_, x)| *"main" == *x.name ).expect("cannot find main").0;
     let mut vm = Vm::new(procs);
@@ -16,8 +16,9 @@ fn test(input : &str) -> Option<RuntimeData> {
 #[test]
 fn blarg() {
     let input = r"
-proc main() {
-    return 0;
+proc main() -> Int {
+    set x : Int = 0;
+    return x;
 }
 "; 
     let output = test(input).unwrap();

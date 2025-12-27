@@ -4,6 +4,9 @@ mod parsing;
 mod compiling;
 mod eval;
 
+#[cfg(test)]
+mod ir_tests;
+
 fn main() {
 
     let ir = parsing::ir_parser::parse("").unwrap();

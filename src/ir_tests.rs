@@ -14,16 +14,27 @@ fn test(input : &str) -> Option<RuntimeData> {
 }
 
 #[test]
-fn blarg() {
+fn should_return_int() {
     let input = r"
 proc main() -> Int {
-    set x : Int = 0;
+    set x : Int = 1;
     return x;
 }
 "; 
-    let output = test(input).unwrap();
 
-    let w = proj!(output, RuntimeData::Int(x), x);
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 1);
+}
 
-    assert_eq!(w, 0);
+#[test]
+fn should_return_bool() {
+    let input = r"
+proc main() -> Bool {
+    set x : Bool = true;
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
 }

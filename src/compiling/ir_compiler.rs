@@ -71,7 +71,7 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         LOp::Jump(x) => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label: x}),
     }).collect::<Result<Vec<_>, CompileError>>()?;
 
-    let stack_size = l_map.values().map(|(_, x)| *x).max().unwrap_or(0);
+    let stack_size = l_map.values().map(|(_, x)| *x + 1).max().unwrap_or(0);
     Ok(Proc { name: Rc::clone(&proc.name), instrs, stack_size })
 }
 

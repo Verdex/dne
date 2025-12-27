@@ -1,6 +1,8 @@
 
 use std::rc::Rc;
 
+use crate::util::proj;
+
 use super::data::*;
 use super::error::*;
 
@@ -9,15 +11,6 @@ pub struct Vm {
     globals: Vec<RuntimeData>,
     frames : Vec<Frame>,
     current : Frame,
-}
-
-macro_rules! proj {
-    ($input:expr, $p:pat, $output:expr) => {
-        match $input {
-            $p => $output,
-            _ => panic!("proj failed"),
-        }
-    }
 }
 
 impl Vm {

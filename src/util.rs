@@ -1,4 +1,16 @@
 
+#[macro_export]
+macro_rules! proj {
+    ($input:expr, $p:pat, $output:expr) => {
+        match $input {
+            $p => $output,
+            _ => panic!("proj failed"),
+        }
+    }
+}
+
+pub use proj;
+
 pub fn underline(input : &str, start : usize, end : usize) -> String {
     let dashes = if start == end {
         "^".to_string()
@@ -23,7 +35,6 @@ pub fn underline(input : &str, start : usize, end : usize) -> String {
     panic!("underline {start} and {end} are outside of the input string with length: {}", input.len());
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -33,7 +44,6 @@ mod test {
         let input = "one two three four\nfive six seven";
         let output = underline(input, 8, 12);
         assert_eq!(output, "error at 1\n\none two three four\n        -----");
-
     }
 
     #[test]

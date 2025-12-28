@@ -19,7 +19,8 @@ pub enum CompileError {
 }
 
 pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
-    
+    let (op_sigs, op_code) = primitive_ops();
+
     let (procs, globals, proc_map) = {
         let mut ps = vec![];
         let mut gs = vec![];
@@ -161,3 +162,13 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Slot { var: Rc<str>, index: usize },
     */
 }
+
+fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
+    fn x(input : Op) -> Vec<Op> { vec![input, Op::SetLocalReturn(2), Op::ReturnLocal(2)] }
+
+    let sigs = vec![ PProc { name: "add_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] } ];
+    let code = vec![ Proc { name: "add_float".into(), instrs: x(Op::Add(0, 1)), stack_size: 2 } ];
+
+    (sigs, code)
+}
+

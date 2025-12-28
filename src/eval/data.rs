@@ -37,6 +37,20 @@ pub enum Op {
     InsertSlot { dest: usize, src: usize, index: usize },
     RemoveSlot { local: usize, index: usize },
     Nop,
+    Add(usize, usize),
+    Sub(usize, usize),
+    Mul(usize, usize),
+    Div(usize, usize),
+    Mod(usize, usize),
+    Neg(usize),
+    Eq(usize, usize),
+    NEq(usize, usize),
+    Gt(usize, usize),
+    Lt(usize, usize),
+    Not(usize),
+    And(usize, usize),
+    Or(usize, usize),
+    Xor(usize, usize),
 }
 
 pub struct Proc { 

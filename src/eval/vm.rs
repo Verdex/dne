@@ -140,6 +140,35 @@ impl Vm {
                     self.current.locals[dest] = self.current.locals[src].clone();
                     self.current.ip += 1;
                 },
+                Op::Add(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Add(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Add(a, b) => { 
+                    match (&self.current.locals[a], &self.current.locals[b]) {
+                        (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a * b) ); },
+                        (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a * b) ); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        _ => { return self.local_unexpected_type(a, "number"); },
+                    }
+                },
+                Op::Sub(a, b) => { },
+                Op::Mul(a, b) => { },
+                Op::Div(a, b) => { },
+                Op::Mod(a, b) => { },
+                Op::Neg(x) => { },
+                Op::Eq(a, b) => { },
+                Op::NEq(a, b) => { },
+                Op::Gt(a, b) => { },
+                Op::Lt(a, b) => { },
+                Op::Not(x) => { },
+                Op::And(a, b) => { },
+                Op::Or(a, b) => { },
+                Op::Xor(a, b) => { },
+
                 /*
                 Op::Cons { sym_var, ref params } => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),

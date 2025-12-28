@@ -154,6 +154,7 @@ impl Vm {
                         (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
+                    self.current.ip += 1;
                 },
                 Op::Sub(a, b) => { },
                 Op::Mul(a, b) => { },

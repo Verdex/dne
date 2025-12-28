@@ -54,7 +54,6 @@ pub mod ir {
         DynCall,
         Closure,
         Cons,
-        // TODO ? Op(Rc<str>),
     }
 
     pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {

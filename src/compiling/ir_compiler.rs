@@ -19,10 +19,10 @@ pub enum CompileError {
 }
 
 pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
-    let (op_sigs, op_code) = primitive_ops();
+    let (op_sigs, mut op_code) = primitive_ops();
 
     let (procs, globals, proc_map) = {
-        let mut ps = vec![];
+        let mut ps : Vec<&PProc> = vec![];
         let mut gs = vec![];
         for t in ir {
             match t {
@@ -30,16 +30,17 @@ pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
                 Top::Proc(x) => { ps.push(x); },
             }
         }
-        let pm = HashMap::from_iter(ps.iter().enumerate().map(|(v, k)| (Rc::clone(&k.name), (*k, v))));
+        let pm = HashMap::from_iter(op_sigs.iter().chain(ps.iter().map(|x| *x)).enumerate().map(|(v, k)| (Rc::clone(&k.name), (k, v))));
         (ps, gs, pm)
     };
 
     // TODO handle globals (drop them all in an init proc?)
 
-    let ret = procs.into_iter().map(|x| compile_proc(x, &proc_map)).collect::<Result<Vec<_>, _>>();
+    let mut compiled = procs.into_iter().map(|x| compile_proc(x, &proc_map)).collect::<Result<Vec<_>, _>>()?;
     
+    op_code.append(&mut compiled);
     
-    ret
+    Ok(op_code)
 }
 
 fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError> {
@@ -167,7 +168,7 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
     fn x(input : Op) -> Vec<Op> { vec![input, Op::SetLocalReturn(2), Op::ReturnLocal(2)] }
 
     let sigs = vec![ PProc { name: "add_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] } ];
-    let code = vec![ Proc { name: "add_float".into(), instrs: x(Op::Add(0, 1)), stack_size: 2 } ];
+    let code = vec![ Proc { name: "add_float".into(), instrs: x(Op::Add(0, 1)), stack_size: 3 } ];
 
     (sigs, code)
 }

@@ -14,6 +14,21 @@ fn test(input : &str) -> Option<RuntimeData> {
 }
 
 #[test]
+fn should_add_floats() {
+    let input = r"
+proc main() -> Float {
+    set z : Float = 3.0;
+    set y : Float = 2.0;
+    set x : Float = call add_float(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Float(x), x);
+    assert_eq!(output, 6.0);
+}
+
+#[test]
 fn should_return_int() {
     let input = r"
 proc main() -> Int {

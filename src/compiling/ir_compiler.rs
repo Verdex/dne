@@ -165,16 +165,37 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
 }
 
 fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
-    fn x(input : Op) -> Vec<Op> { vec![input, Op::SetLocalReturn(2), Op::ReturnLocal(2)] }
+    fn bin(input : Op) -> Vec<Op> { vec![input, Op::SetLocalReturn(2), Op::ReturnLocal(2)] }
+    fn uni(input : Op) -> Vec<Op> { vec![input, Op::SetLocalReturn(1), Op::ReturnLocal(1)] }
 
     let sigs = vec![ 
         PProc { name: "add_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] },
         PProc { name: "add_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+        PProc { name: "sub_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] },
+        PProc { name: "sub_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+        PProc { name: "mul_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] },
+        PProc { name: "mul_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+        PProc { name: "div_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] },
+        PProc { name: "div_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+        PProc { name: "mod_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Float, body: vec![] },
+        PProc { name: "mod_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+        PProc { name: "neg_float".into(), params: vec![("a".into(), Type::Float)], return_type: Type::Float, body: vec![] },
+        PProc { name: "neg_int".into(), params: vec![("a".into(), Type::Int)], return_type: Type::Int, body: vec![] },
     ];
 
     let code = vec![ 
-        Proc { name: "add_float".into(), instrs: x(Op::Add(0, 1)), stack_size: 3 },
-        Proc { name: "add_int".into(), instrs: x(Op::Add(0, 1)), stack_size: 3 },
+        Proc { name: "add_float".into(), instrs: bin(Op::Add(0, 1)), stack_size: 3 },
+        Proc { name: "add_int".into(), instrs: bin(Op::Add(0, 1)), stack_size: 3 },
+        Proc { name: "sub_float".into(), instrs: bin(Op::Sub(0, 1)), stack_size: 3 },
+        Proc { name: "sub_int".into(), instrs: bin(Op::Sub(0, 1)), stack_size: 3 },
+        Proc { name: "mul_float".into(), instrs: bin(Op::Mul(0, 1)), stack_size: 3 },
+        Proc { name: "mul_int".into(), instrs: bin(Op::Mul(0, 1)), stack_size: 3 },
+        Proc { name: "div_float".into(), instrs: bin(Op::Div(0, 1)), stack_size: 3 },
+        Proc { name: "div_int".into(), instrs: bin(Op::Div(0, 1)), stack_size: 3 },
+        Proc { name: "mod_float".into(), instrs: bin(Op::Mod(0, 1)), stack_size: 3 },
+        Proc { name: "mod_int".into(), instrs: bin(Op::Mod(0, 1)), stack_size: 3 },
+        Proc { name: "neg_float".into(), instrs: uni(Op::Neg(0)), stack_size: 2 },
+        Proc { name: "neg_int".into(), instrs: uni(Op::Neg(0)), stack_size: 2 },
     ];
 
     (sigs, code)

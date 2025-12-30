@@ -181,6 +181,11 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
         PProc { name: "mod_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Int, body: vec![] },
         PProc { name: "neg_float".into(), params: vec![("a".into(), Type::Float)], return_type: Type::Float, body: vec![] },
         PProc { name: "neg_int".into(), params: vec![("a".into(), Type::Int)], return_type: Type::Int, body: vec![] },
+
+        PProc { name: "and".into(), params: vec![("a".into(), Type::Bool), ("b".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "or".into(), params: vec![("a".into(), Type::Bool), ("b".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "xor".into(), params: vec![("a".into(), Type::Bool), ("b".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "not".into(), params: vec![("a".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
     ];
 
     let code = vec![ 
@@ -196,6 +201,11 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
         Proc { name: "mod_int".into(), instrs: bin(Op::Mod(0, 1)), stack_size: 3 },
         Proc { name: "neg_float".into(), instrs: uni(Op::Neg(0)), stack_size: 2 },
         Proc { name: "neg_int".into(), instrs: uni(Op::Neg(0)), stack_size: 2 },
+
+        Proc { name: "and".into(), instrs: bin(Op::And(0, 1)), stack_size: 3 },
+        Proc { name: "or".into(), instrs: bin(Op::Or(0, 1)), stack_size: 3 },
+        Proc { name: "xor".into(), instrs: bin(Op::Xor(0, 1)), stack_size: 3 },
+        Proc { name: "not".into(), instrs: uni(Op::Not(0)), stack_size: 2 },
     ];
 
     (sigs, code)

@@ -353,6 +353,7 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::Nop => { self.current.ip += 1; },
                 /*
                 Op::Cons { sym_var, ref params } => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),

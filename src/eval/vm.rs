@@ -96,6 +96,9 @@ impl Vm {
                     if test {
                         self.current.ip = label;
                     }
+                    else {
+                        self.current.ip += 1;
+                    }
                 },
                 Op::ReturnLocal(local) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));

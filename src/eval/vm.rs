@@ -149,8 +149,8 @@ impl Vm {
                 },
                 Op::Add(a, b) => { 
                     match (&self.current.locals[a], &self.current.locals[b]) {
-                        (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a * b) ); },
-                        (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a * b) ); },
+                        (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a + b) ); },
+                        (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a + b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
                         (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
@@ -164,7 +164,16 @@ impl Vm {
                 Op::Sub(_, local) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::Sub(a, b) => { },
+                Op::Sub(a, b) => {
+                    match (&self.current.locals[a], &self.current.locals[b]) {
+                        (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a - b) ); },
+                        (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a - b) ); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        _ => { return self.local_unexpected_type(a, "number"); },
+                    }
+                    self.current.ip += 1;
+                },
 
                 Op::Mul(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));

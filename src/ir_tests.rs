@@ -25,7 +25,7 @@ proc main() -> Int {
 "; 
 
     let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
-    assert_eq!(output, 6);
+    assert_eq!(output, 5);
 }
 
 #[test]
@@ -40,7 +40,7 @@ proc main() -> Float {
 "; 
 
     let output = proj!(test(input).unwrap(), RuntimeData::Float(x), x);
-    assert_eq!(output, 6.0);
+    assert_eq!(output, 5.0);
 }
 
 #[test]

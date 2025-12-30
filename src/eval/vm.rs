@@ -151,8 +151,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a + b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a + b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -168,8 +168,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a - b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a - b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -185,8 +185,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a * b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a * b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -202,8 +202,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a / b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a / b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -219,8 +219,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a % b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a % b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -229,7 +229,14 @@ impl Vm {
                 Op::Neg(local) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::Neg(x) => { },
+                Op::Neg(x) => { 
+                    match &self.current.locals[x] {
+                        RuntimeData::Float(x) => { ret = Some( RuntimeData::Float(-x) ); },        
+                        RuntimeData::Int(x) => { ret = Some( RuntimeData::Int(-x) ); },        
+                        _ => { return self.local_unexpected_type(x, "number"); },
+                    }
+                    self.current.ip += 1;
+                },
 
                 Op::Eq(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
@@ -238,7 +245,23 @@ impl Vm {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
                 Op::Eq(a, b) => { 
+                    match (&self.current.locals[a], &self.current.locals[b]) {
+                        (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
+                        (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
+                        (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
+                        (RuntimeData::Symbol(a), RuntimeData::Symbol(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
+                        (RuntimeData::Nil, RuntimeData::Nil) => { ret = Some( RuntimeData::Bool(true) ); },
+                        (RuntimeData::Ref(_), RuntimeData::Ref(_)) => { todo!() },
 
+                        (RuntimeData::Float(a), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Int(a), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Bool(a), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Symbol(a), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        //_ => { return self.local_unexpected_type(a, "number"); },
+                    }
+                    self.current.ip += 1;
                 },
 
                 Op::Gt(local, _) if local >= self.current.locals.len() => {
@@ -251,8 +274,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a > b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a > b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -268,8 +291,8 @@ impl Vm {
                     match (&self.current.locals[a], &self.current.locals[b]) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a < b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a < b) ); },
-                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(a, "int"); },
-                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(a, "float"); },
+                        (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(_), _) => { return self.local_unexpected_type(b, "float"); },
                         _ => { return self.local_unexpected_type(a, "number"); },
                     }
                     self.current.ip += 1;
@@ -278,7 +301,13 @@ impl Vm {
                 Op::Not(local) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::Not(x) => { },
+                Op::Not(x) => { 
+                    match &self.current.locals[x] {
+                        RuntimeData::Bool(x) => { ret = Some( RuntimeData::Bool(!x) ); },        
+                        _ => { return self.local_unexpected_type(x, "bool"); },
+                    }
+                    self.current.ip += 1;
+                },
 
                 Op::And(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));

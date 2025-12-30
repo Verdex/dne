@@ -186,6 +186,11 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
         PProc { name: "or".into(), params: vec![("a".into(), Type::Bool), ("b".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
         PProc { name: "xor".into(), params: vec![("a".into(), Type::Bool), ("b".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
         PProc { name: "not".into(), params: vec![("a".into(), Type::Bool)], return_type: Type::Bool, body: vec![] },
+
+        PProc { name: "gt_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "gt_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "lt_float".into(), params: vec![("a".into(), Type::Float), ("b".into(), Type::Float)], return_type: Type::Bool, body: vec![] },
+        PProc { name: "lt_int".into(), params: vec![("a".into(), Type::Int), ("b".into(), Type::Int)], return_type: Type::Bool, body: vec![] },
     ];
 
     let code = vec![ 
@@ -206,6 +211,11 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
         Proc { name: "or".into(), instrs: bin(Op::Or(0, 1)), stack_size: 3 },
         Proc { name: "xor".into(), instrs: bin(Op::Xor(0, 1)), stack_size: 3 },
         Proc { name: "not".into(), instrs: uni(Op::Not(0)), stack_size: 2 },
+
+        Proc { name: "gt_float".into(), instrs: bin(Op::Gt(0, 1)), stack_size: 3 },
+        Proc { name: "gt_int".into(), instrs: bin(Op::Gt(0, 1)), stack_size: 3 },
+        Proc { name: "lt_float".into(), instrs: bin(Op::Lt(0, 1)), stack_size: 3 },
+        Proc { name: "lt_int".into(), instrs: bin(Op::Lt(0, 1)), stack_size: 3 },
     ];
 
     (sigs, code)

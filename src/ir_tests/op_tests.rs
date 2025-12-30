@@ -5,6 +5,66 @@ use crate::eval::data::RuntimeData;
 use super::util::test;
 
 #[test]
+fn should_lt_floats() {
+    let input = r"
+proc main() -> Bool {
+    set z : Float = 4.9;
+    set y : Float = 5.1;
+    set x : Bool = call lt_float(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_lt_ints() {
+    let input = r"
+proc main() -> Bool {
+    set z : Int = 9;
+    set y : Int = 10;
+    set x : Bool = call lt_int(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_gt_floats() {
+    let input = r"
+proc main() -> Bool {
+    set z : Float = 5.1;
+    set y : Float = 4.9;
+    set x : Bool = call gt_float(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_gt_ints() {
+    let input = r"
+proc main() -> Bool {
+    set z : Int = 10;
+    set y : Int = 9;
+    set x : Bool = call gt_int(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
 fn should_xor() {
     let input = r"
 proc main() -> Bool {

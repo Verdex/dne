@@ -140,6 +140,7 @@ impl Vm {
                     self.current.locals[dest] = self.current.locals[src].clone();
                     self.current.ip += 1;
                 },
+
                 Op::Add(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
@@ -156,18 +157,97 @@ impl Vm {
                     }
                     self.current.ip += 1;
                 },
+
+                Op::Sub(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Sub(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Sub(a, b) => { },
+
+                Op::Mul(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Mul(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Mul(a, b) => { },
+
+                Op::Div(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Div(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Div(a, b) => { },
+
+                Op::Mod(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Mod(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Mod(a, b) => { },
+
                 Op::Neg(x) => { },
+
+                Op::Eq(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Eq(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Eq(a, b) => { },
+
+                Op::NEq(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::NEq(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::NEq(a, b) => { },
+
+                Op::Gt(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Gt(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Gt(a, b) => { },
+
+                Op::Lt(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Lt(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Lt(a, b) => { },
+
                 Op::Not(x) => { },
+
+                Op::And(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::And(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::And(a, b) => { },
+
+                Op::Or(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Or(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Or(a, b) => { },
+
+                Op::Xor(local, _) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Xor(_, local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Xor(a, b) => { },
 
                 /*

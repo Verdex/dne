@@ -44,7 +44,6 @@ pub enum Op {
     Mod(usize, usize),
     Neg(usize),
     Eq(usize, usize),
-    NEq(usize, usize),
     Gt(usize, usize),
     Lt(usize, usize),
     Not(usize),

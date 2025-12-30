@@ -85,13 +85,13 @@ impl Vm {
                 Op::Jump(label) => {
                     self.current.ip = label;
                 },
-                Op::BranchEqual { local, .. } if local >= self.current.locals.len() => {
+                Op::BranchTrue { local, .. } if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::BranchEqual { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) ) => {
+                Op::BranchTrue { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) ) => {
                     return self.local_unexpected_type(local, "bool");
                 },
-                Op::BranchEqual { label, local } => {
+                Op::BranchTrue { label, local } => {
                     let test = proj!(self.current.locals[local], RuntimeData::Bool(x), x);
                     if test {
                         self.current.ip = label;

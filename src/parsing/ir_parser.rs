@@ -47,7 +47,7 @@ pub struct Proc {
 pub enum Stmt {
     Set { var: Rc<str>, ttype : Type, val: Expr },
     Jump(Rc<str>),
-    BranchEqual { label: Rc<str>, var: Rc<str> },
+    BranchTrue { label: Rc<str>, var: Rc<str> },
     Return(Rc<str>),
     Yield(Rc<str>),
     Break,
@@ -173,7 +173,7 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
             let label = expect_sym(input)?;
             let var = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::BranchEqual { label, var });
+            ret.push(Stmt::BranchTrue { label, var });
         }
         else if input.check(|x| x.eq(&Token::Return))? {
             let r = expect_sym(input)?;

@@ -66,7 +66,7 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
         LOp::Label(_) => Ok(Op::Nop),
         LOp::Branch { label, var } if label_map.contains_key(&label) => {
             let local = access(&l_map, &var, &proc.name, &Type::Bool)?;
-            Ok(Op::BranchEqual { local, label: *label_map.get(&label).unwrap() })
+            Ok(Op::BranchTrue { local, label: *label_map.get(&label).unwrap() })
         },
         LOp::Branch { label, .. } => Err(CompileError::AccessMissingLabel { proc: Rc::clone(&proc.name), label }),
         LOp::Jump(x) if label_map.contains_key(&x) => Ok(Op::Jump(*label_map.get(&x).unwrap())),
@@ -109,7 +109,7 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
 
     match stmt {
         Stmt::Jump(x) => Ok(vec![LOp::Jump(Rc::clone(x))]),
-        Stmt::BranchEqual { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),
+        Stmt::BranchTrue { label, var } => Ok(vec![LOp::Branch { label: Rc::clone(label), var: Rc::clone(var) }]),
         Stmt::Label(x) => Ok(vec![LOp::Label(Rc::clone(x))]),
         Stmt::Return(local) => s(Op::ReturnLocal(access(l_map, local, &proc.name, &proc.return_type)?)),
         Stmt::Set { var, val: Expr::Lit(Lit::Int(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Int)?, RuntimeData::Int(*x))),

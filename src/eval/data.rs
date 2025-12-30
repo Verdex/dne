@@ -20,7 +20,7 @@ pub enum Op {
     Resume(usize),
     ReturnLocal(usize), 
     Jump(usize),
-    BranchEqual { label: usize, local: usize },
+    BranchTrue { label: usize, local: usize },
     SetLocalData(usize, RuntimeData),
     SetLocalReturn(usize),
     SetLocalVar { src: usize, dest: usize },

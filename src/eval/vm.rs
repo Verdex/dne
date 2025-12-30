@@ -253,13 +253,12 @@ impl Vm {
                         (RuntimeData::Nil, RuntimeData::Nil) => { ret = Some( RuntimeData::Bool(true) ); },
                         (RuntimeData::Ref(_), RuntimeData::Ref(_)) => { todo!() },
 
-                        (RuntimeData::Float(a), _) => { return self.local_unexpected_type(b, "int"); },
+                        (RuntimeData::Float(a), _) => { return self.local_unexpected_type(b, "float"); },
                         (RuntimeData::Int(a), _) => { return self.local_unexpected_type(b, "int"); },
-                        (RuntimeData::Bool(a), _) => { return self.local_unexpected_type(b, "int"); },
-                        (RuntimeData::Symbol(a), _) => { return self.local_unexpected_type(b, "int"); },
-                        (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "int"); },
-                        (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "int"); },
-                        //_ => { return self.local_unexpected_type(a, "number"); },
+                        (RuntimeData::Bool(a), _) => { return self.local_unexpected_type(b, "bool"); },
+                        (RuntimeData::Symbol(a), _) => { return self.local_unexpected_type(b, "symbol"); },
+                        (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "nil"); },
+                        (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "ref"); }, // TODO actually this might be okay
                     }
                     self.current.ip += 1;
                 },

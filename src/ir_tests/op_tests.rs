@@ -5,6 +5,66 @@ use crate::eval::data::RuntimeData;
 use super::util::test;
 
 #[test]
+fn should_eq_symbols() {
+    let input = r"
+proc main() -> Bool {
+    set z : Symbol = ~blah;
+    set y : Symbol = ~blah;
+    set x : Bool = call eq_symbol(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_eq_bools() {
+    let input = r"
+proc main() -> Bool {
+    set z : Bool = false;
+    set y : Bool = false;
+    set x : Bool = call eq_bool(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_eq_ints() {
+    let input = r"
+proc main() -> Bool {
+    set z : Int = 5;
+    set y : Int = 5;
+    set x : Bool = call eq_int(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_eq_floats() {
+    let input = r"
+proc main() -> Bool {
+    set z : Float = 5.1;
+    set y : Float = 5.1;
+    set x : Bool = call eq_float(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
 fn should_lt_floats() {
     let input = r"
 proc main() -> Bool {

@@ -45,11 +45,22 @@ pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
 
 fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError> {
 
-    let mut l_map : LMap = HashMap::from_iter(
-        proc.params.iter().map(|(name, ttype)| (Rc::clone(name), *ttype))
-        .chain(proc.body.iter().filter_map(|stmt| match stmt { Stmt::Set { var, ttype, .. } => Some((Rc::clone(var), *ttype)), _ => None} ))
-        .enumerate()
-        .map(|(i, (name, ttype))| (Rc::clone(&name), (ttype, i))));
+    let mut l_map : LMap = {
+
+        // TODO rename
+        // TODO check for collisions where name doesn't match type
+        // TODO handle setting param
+        let mut blarg = proc.body.iter().filter_map(|stmt| match stmt { Stmt::Set { var, ttype, .. } => Some((Rc::clone(var), *ttype)), _ => None} ).collect::<Vec<_>>();
+
+        blarg.sort_by(|(a, _), (b, _)| a.cmp(b));
+        blarg.dedup_by(|(a, _), (b, _)| a.eq(&b));
+
+        HashMap::from_iter(
+            proc.params.iter().map(|(name, ttype)| (Rc::clone(name), *ttype))
+            .chain(blarg)
+            .enumerate()
+            .map(|(i, (name, ttype))| (Rc::clone(&name), (ttype, i))))
+    };
 
     let mut stmts = vec![];
     for stmt in &proc.body {

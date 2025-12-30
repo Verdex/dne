@@ -190,6 +190,9 @@ impl Vm {
                 },
                 Op::Mod(a, b) => { },
 
+                Op::Neg(local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Neg(x) => { },
 
                 Op::Eq(local, _) if local >= self.current.locals.len() => {
@@ -224,6 +227,9 @@ impl Vm {
                 },
                 Op::Lt(a, b) => { },
 
+                Op::Not(local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
                 Op::Not(x) => { },
 
                 Op::And(local, _) if local >= self.current.locals.len() => {

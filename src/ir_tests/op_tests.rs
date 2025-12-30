@@ -5,6 +5,65 @@ use crate::eval::data::RuntimeData;
 use super::util::test;
 
 #[test]
+fn should_xor() {
+    let input = r"
+proc main() -> Bool {
+    set z : Bool = false;
+    set y : Bool = true;
+    set x : Bool = call xor(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_or() {
+    let input = r"
+proc main() -> Bool {
+    set z : Bool = false;
+    set y : Bool = true;
+    set x : Bool = call or(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_and() {
+    let input = r"
+proc main() -> Bool {
+    set z : Bool = true;
+    set y : Bool = true;
+    set x : Bool = call and(z, y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
+fn should_not() {
+    let input = r"
+proc main() -> Bool {
+    set y : Bool = false;
+    set x : Bool = call not(y);
+    return x;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Bool(x), x);
+    assert_eq!(output, true);
+}
+
+#[test]
 fn should_neg_int() {
     let input = r"
 proc main() -> Int {

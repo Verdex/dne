@@ -54,7 +54,7 @@ impl Vm {
                 Op::DynCall(local, _) if local >= self.current.locals.len() => {
                     return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
                 },
-                Op::DynCall(local, _) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => {
+                Op::DynCall(local, _) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => { // TODO Int => Closure
                     return self.local_unexpected_type(local, "Int");
                 },
                 Op::DynCall(local, ref params) => {

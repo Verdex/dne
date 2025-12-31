@@ -330,27 +330,17 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Xor(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Xor(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Xor(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(*a ^ *b) ); },
                         (_, RuntimeData::Bool(_)) => { return self.local_unexpected_type(a, "bool");  },
                         _ => { return self.local_unexpected_type(b, "bool");  },
                     }
                     self.current.ip += 1;
                 },
-                // TODO why not just do everything with a modified get local
-                Op::Cons { sym_var, .. } if sym_var >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(sym_var, self.stack_trace()));
-                },
                 Op::Cons { sym_var, ref params } => {
                     let params = self.clone_locals(params)?;
-                    let name = match &self.current.locals[sym_var] {
+                    let name = match self.get_local(sym_var)? {
                         RuntimeData::Symbol(x) => Rc::clone(x),
                         _ => { return self.local_unexpected_type(sym_var, "symbol"); },
                     };
@@ -497,6 +487,13 @@ impl Vm {
 
     fn local_unexpected_type<T>(&self, local : usize, expected : &'static str) -> Result<T, VmError> {
         return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected, found: format!("{:?}", self.current.locals[local]).into() });
+    }
+
+    fn get_local<'a>(&'a self, local: usize) -> Result<&'a RuntimeData, VmError> {
+        if local >= self.current.locals.len() {
+            return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+        }
+        Ok(&self.current.locals[local])
     }
 
     fn clone_locals(&self, locals: &[usize]) -> Result<Vec<RuntimeData>, VmError> {

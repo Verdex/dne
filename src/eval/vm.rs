@@ -525,6 +525,20 @@ impl Vm {
     fn local_unexpected_type<T>(&self, local : usize, expected : &'static str) -> Result<T, VmError> {
         return Err(VmError::LocalUnexpectedType { local, stack_trace: self.stack_trace(), expected, found: format!("{:?}", self.current.locals[local]).into() });
     }
+
+    fn clone_locals(&self, locals: &[usize]) -> Result<Vec<RuntimeData>, VmError> {
+        let mut ret = vec![];
+        for local in locals {
+            let local = *local;
+            if local >= self.current.locals.len() {
+                return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+            }
+            else {
+                ret.push(self.current.locals[local].clone());
+            }
+        }
+        Ok(ret)
+    }
 }
 
 

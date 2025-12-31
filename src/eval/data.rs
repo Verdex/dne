@@ -37,6 +37,7 @@ pub enum Op {
     Break,
     InsertSlot { dest: usize, src: usize, index: usize },
     RemoveSlot { local: usize, index: usize },
+    Delete(usize),
     Nop,
     Add(usize, usize),
     Sub(usize, usize),

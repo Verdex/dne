@@ -369,7 +369,7 @@ impl Vm {
                         let mut ret = vec![];
                         for param in params {
                             match get_local(*param, &self.current.locals) { // TODO get locals?
-                                Ok(v) => { actual_params.push(v); },
+                                Ok(v) => { ret.push(v); },
                                 Err(f) => { 
                                     return Err(f(self.stack_trace())); // TODO fix
                                 }, 

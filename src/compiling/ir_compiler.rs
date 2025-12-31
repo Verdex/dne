@@ -244,3 +244,84 @@ fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {
     (sigs, code)
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    fn proc(params: Vec<(Rc<str>, Type)>, sets: Vec<(Rc<str>, Type, Lit)>) -> PProc {
+        let body = sets.into_iter().map(|(n, t, v)| Stmt::Set { var: n, ttype: t, val: Expr::Lit(v) }).collect::<Vec<_>>();
+        PProc { name: "a".into(), params, body, return_type: Type::Int }
+    }
+    
+    #[test]
+    fn should_calculate_zero_param_only_stack_size() {
+        let input = proc(vec![], vec![]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 0);
+    }
+
+    #[test]
+    fn should_calculate_single_param_only_stack_size() {
+        let input = proc(vec![("a".into(), Type::Int)], vec![]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 1);
+    }
+
+    #[test]
+    fn should_calculate_two_params_only_stack_size() {
+        let input = proc(vec![("a".into(), Type::Int), ("b".into(), Type::Int)], vec![]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 2);
+    }
+
+    #[test]
+    fn should_calculate_single_local_only_stack_size() {
+        let input = proc(vec![], vec![("a".into(), Type::Int, Lit::Int(0))]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 1);
+    }
+
+    #[test]
+    fn should_calculate_two_locals_only_stack_size() {
+        let input = proc(vec![], vec![("a".into(), Type::Int, Lit::Int(0)), ("b".into(), Type::Int, Lit::Int(0))]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 2);
+    }
+
+    #[test]
+    fn should_error_with_duplicate_params() {
+        let input = proc(vec![("a".into(), Type::Int), ("a".into(), Type::Int)], vec![]);
+        let output = compile_proc(&input, &HashMap::from([])); 
+        assert!(matches!(output, Err(_)));
+    }
+
+    #[test]
+    fn should_calculate_stack_size_with_duplicate_set() {
+        let input = proc(vec![], vec![("a".into(), Type::Int, Lit::Int(0)), ("a".into(), Type::Int, Lit::Int(0))]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 1);
+    }
+
+    #[test]
+    fn should_calculate_stack_size_with_setting_a_param() {
+        let input = proc(vec![("a".into(), Type::Int)], vec![("a".into(), Type::Int, Lit::Int(0))]);
+        let output = compile_proc(&input, &HashMap::from([])).unwrap(); 
+        assert_eq!(output.stack_size, 1);
+    }
+
+    #[test]
+    fn should_error_with_param_set_type_mismatch() {
+        let input = proc(vec![("a".into(), Type::Float)], vec![("a".into(), Type::Int, Lit::Int(0))]);
+        let output = compile_proc(&input, &HashMap::from([])); 
+        assert!(matches!(output, Err(_)));
+    }
+
+    #[test]
+    fn should_error_with_duplicate_set_type_mismatch() {
+        let input = proc(vec![], vec![("a".into(), Type::Int, Lit::Int(0)), ("a".into(), Type::Float, Lit::Float(1.0))]);
+        let output = compile_proc(&input, &HashMap::from([])); 
+        let w = output.unwrap_err();
+        panic!("{:?}", w);
+        assert!(matches!(output, Err(_)));
+    }
+}
+

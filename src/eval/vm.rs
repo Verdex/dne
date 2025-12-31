@@ -133,14 +133,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Add(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Add(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Add(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a + b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a + b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -150,14 +144,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Sub(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Sub(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Sub(a, b) => {
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a - b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a - b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -167,14 +155,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Mul(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Mul(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Mul(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a * b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a * b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -184,14 +166,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Div(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Div(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Div(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a / b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a / b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -201,14 +177,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Mod(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Mod(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Mod(a, b) => {
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Float(a % b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Int(a % b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -218,11 +188,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Neg(local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Neg(x) => { 
-                    match &self.current.locals[x] {
+                    match self.get_local(x)? {
                         RuntimeData::Float(x) => { ret = Some( RuntimeData::Float(-x) ); },        
                         RuntimeData::Int(x) => { ret = Some( RuntimeData::Int(-x) ); },        
                         _ => { return self.local_unexpected_type(x, "number"); },
@@ -230,14 +197,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Eq(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Eq(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Eq(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
                         (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
@@ -255,14 +216,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Gt(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Gt(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Gt(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a > b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a > b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -272,14 +227,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Lt(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Lt(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Lt(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Float(a), RuntimeData::Float(b)) => { ret = Some( RuntimeData::Bool(a < b) ); },
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a < b) ); },
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
@@ -289,25 +238,16 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Not(local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Not(x) => { 
-                    match &self.current.locals[x] {
+                    match self.get_local(x)? {
                         RuntimeData::Bool(x) => { ret = Some( RuntimeData::Bool(!x) ); },        
                         _ => { return self.local_unexpected_type(x, "bool"); },
                     }
                     self.current.ip += 1;
                 },
 
-                Op::And(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::And(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::And(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(*a && *b) ); },
                         (_, RuntimeData::Bool(_)) => { return self.local_unexpected_type(a, "bool");  },
                         _ => { return self.local_unexpected_type(b, "bool");  },
@@ -315,14 +255,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Or(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Or(_, local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::Or(a, b) => { 
-                    match (&self.current.locals[a], &self.current.locals[b]) {
+                    match (self.get_local(a)?, self.get_local(b)?) {
                         (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(*a || *b) ); },
                         (_, RuntimeData::Bool(_)) => { return self.local_unexpected_type(a, "bool");  },
                         _ => { return self.local_unexpected_type(b, "bool");  },

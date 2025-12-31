@@ -45,15 +45,7 @@ impl Vm {
                     return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
                 },
                 Op::Call(proc_id, ref params) => {
-                    let mut new_locals = vec![];
-                    for param in params {
-                        match get_local(*param, &self.current.locals) {
-                            Ok(v) => { new_locals.push(v); },
-                            Err(f) => { 
-                                return Err(f(self.stack_trace()));
-                            },
-                        }
-                    }
+                    let mut new_locals = self.clone_locals(params)?;
                     self.current.ip += 1;
                     new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params.len()).collect());
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
@@ -73,15 +65,7 @@ impl Vm {
                             Err(_) => { return self.local_unexpected_type(local, "proc_id"); },
                         }
                     };
-                    let mut new_locals = vec![];
-                    for param in params {
-                        match get_local(*param, &self.current.locals) {
-                            Ok(v) => { new_locals.push(v); },
-                            Err(f) => { 
-                                return Err(f(self.stack_trace()));
-                            },
-                        }
-                    }
+                    let mut new_locals = self.clone_locals(params)?;
                     self.current.ip += 1;
                     new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params.len()).collect());
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
@@ -365,18 +349,7 @@ impl Vm {
                     return Err(VmError::AccessMissingLocal(sym_var, self.stack_trace()));
                 },
                 Op::Cons { sym_var, ref params } => {
-                    let params = {
-                        let mut ret = vec![];
-                        for param in params {
-                            match get_local(*param, &self.current.locals) { // TODO get locals?
-                                Ok(v) => { ret.push(v); },
-                                Err(f) => { 
-                                    return Err(f(self.stack_trace())); // TODO fix
-                                }, 
-                            }
-                        }
-                        ret
-                    };
+                    let params = self.clone_locals(params)?;
                     let name = match &self.current.locals[sym_var] {
                         RuntimeData::Symbol(x) => Rc::clone(x),
                         _ => { return self.local_unexpected_type(sym_var, "symbol"); },

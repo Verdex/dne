@@ -1,6 +1,6 @@
 
 use std::rc::Rc;
-use std::collections::HashMap;
+use std::collections::{ HashSet, HashMap };
 
 use crate::parsing::ir_parser::{Lit, Expr, Type, Stmt, Top, Proc as PProc, Global};
 use crate::eval::data::*;
@@ -16,7 +16,10 @@ pub enum CompileError {
     AccessMissingLabel { proc: Rc<str>, label: Rc<str> },
     ProcCallArityMismatch { caller_proc: Rc<str>, callee_proc: Rc<str> },
     TypeMismatch { proc: Rc<str>, expected: Rc<str>, found : Rc<str> },
+    ReuseParamName { proc: Rc<str>, param_name: Rc<str> },
 }
+
+// TODO define error for CompileName
 
 pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
     let (op_sigs, mut op_code) = primitive_ops();
@@ -47,17 +50,28 @@ fn compile_proc(proc : &PProc, proc_map : &ProcMap) -> Result<Proc, CompileError
 
     let mut l_map : LMap = {
 
-        // TODO rename
-        // TODO check for collisions where name doesn't match type
-        // TODO handle setting param
-        let mut blarg = proc.body.iter().filter_map(|stmt| match stmt { Stmt::Set { var, ttype, .. } => Some((Rc::clone(var), *ttype)), _ => None} ).collect::<Vec<_>>();
+        let params : HashSet<Rc<str>> = {
+            let mut x = HashSet::new();
+            for (name, _) in &proc.params {
+                if !x.insert(Rc::clone(name)) {
+                    return Err(CompileError::ReuseParamName { proc: Rc::clone(&proc.name), param_name: Rc::clone(name) });
+                }
+            }
+            x
+        };
 
-        blarg.sort_by(|(a, _), (b, _)| a.cmp(b));
-        blarg.dedup_by(|(a, _), (b, _)| a.eq(&b));
+        let mut init_sets = proc.body.iter().filter_map(|stmt| 
+            match stmt { 
+                Stmt::Set { var, ttype, .. } if !params.contains(var) => Some((Rc::clone(var), *ttype)), 
+                _ => None
+            } ).collect::<Vec<_>>();
+
+        init_sets.sort_by(|(a, _), (b, _)| a.cmp(b));
+        init_sets.dedup_by(|(a, _), (b, _)| a.eq(&b));
 
         HashMap::from_iter(
             proc.params.iter().map(|(name, ttype)| (Rc::clone(name), *ttype))
-            .chain(blarg)
+            .chain(init_sets)
             .enumerate()
             .map(|(i, (name, ttype))| (Rc::clone(&name), (ttype, i))))
     };
@@ -291,7 +305,7 @@ mod test {
     fn should_error_with_duplicate_params() {
         let input = proc(vec![("a".into(), Type::Int), ("a".into(), Type::Int)], vec![]);
         let output = compile_proc(&input, &HashMap::from([])); 
-        assert!(matches!(output, Err(_)));
+        assert!(matches!(output, Err(CompileError::ReuseParamName { .. })));
     }
 
     #[test]
@@ -312,16 +326,14 @@ mod test {
     fn should_error_with_param_set_type_mismatch() {
         let input = proc(vec![("a".into(), Type::Float)], vec![("a".into(), Type::Int, Lit::Int(0))]);
         let output = compile_proc(&input, &HashMap::from([])); 
-        assert!(matches!(output, Err(_)));
+        assert!(matches!(output, Err(CompileError::TypeMismatch { .. })));
     }
 
     #[test]
     fn should_error_with_duplicate_set_type_mismatch() {
         let input = proc(vec![], vec![("a".into(), Type::Int, Lit::Int(0)), ("a".into(), Type::Float, Lit::Float(1.0))]);
         let output = compile_proc(&input, &HashMap::from([])); 
-        let w = output.unwrap_err();
-        panic!("{:?}", w);
-        assert!(matches!(output, Err(_)));
+        assert!(matches!(output, Err(CompileError::TypeMismatch { .. })));
     }
 }
 

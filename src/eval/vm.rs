@@ -514,16 +514,6 @@ impl Vm {
     }
 }
 
-
-fn get_local(index: usize, locals : &[RuntimeData]) -> Result<RuntimeData, Box<dyn Fn(StackTrace) -> VmError>> {
-    if index >= locals.len() {
-        Err(Box::new(move |trace| VmError::AccessMissingLocal(index, trace)))
-    }
-    else {
-        Ok(locals[index].clone())
-    }
-}
-
 fn co_is_running(coroutine : &Coroutine) -> bool {
     match coroutine { 
         Coroutine::Running => true,

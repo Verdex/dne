@@ -12,6 +12,7 @@ pub enum RuntimeData {
     // TODO closure, coroutine, string
 }
 
+#[derive(Debug)]
 pub enum Op {
     // TODO set global
     // TODO set local global
@@ -52,6 +53,7 @@ pub enum Op {
     Xor(usize, usize),
 }
 
+#[derive(Debug)]
 pub struct Proc { 
     pub name : Rc<str>,
     pub instrs : Vec<Op>,

@@ -6,9 +6,14 @@ use crate::util::proj;
 use super::data::*;
 use super::error::*;
 
+enum Heap {
+    Cons { name: Rc<str>, params: Vec<RuntimeData> },
+    Nil,
+}
+
 pub struct Vm {
     procs: Vec<Proc>,
-    globals: Vec<RuntimeData>,
+    heap: Vec<Heap>,
     frames : Vec<Frame>,
     current : Frame,
 }
@@ -16,7 +21,7 @@ pub struct Vm {
 impl Vm {
     pub fn new(procs: Vec<Proc>) -> Self {
         let current = Frame { proc_id: 0, ip: 0, locals: vec![] };
-        Vm { procs, globals: vec![], frames: vec![], current }
+        Vm { procs, heap: vec![], frames: vec![], current }
     }
 
     pub fn run(&mut self, entry : usize) -> Result<Option<RuntimeData>, VmError> {
@@ -355,10 +360,39 @@ impl Vm {
                     }
                     self.current.ip += 1;
                 },
+                // TODO why not just do everything with a modified get local
+                Op::Cons { sym_var, .. } if sym_var >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(sym_var, self.stack_trace()));
+                },
+                Op::Cons { sym_var, ref params } => {
+                    let params = {
+                        let mut ret = vec![];
+                        for param in params {
+                            match get_local(*param, &self.current.locals) { // TODO get locals?
+                                Ok(v) => { actual_params.push(v); },
+                                Err(f) => { 
+                                    return Err(f(self.stack_trace())); // TODO fix
+                                }, 
+                            }
+                        }
+                        ret
+                    };
+                    let name = match &self.current.locals[sym_var] {
+                        RuntimeData::Symbol(x) => Rc::clone(x),
+                        _ => { return self.local_unexpected_type(sym_var, "symbol"); },
+                    };
+
+                    // TODO pick first nil
+                    self.heap.push(Heap::Cons { name, params });
+                    ret = Some( RuntimeData::Ref( self.heap.len() ) );
+                    self.current.ip += 1;
+                },
+                Op::Delete(local) => todo!(),
 
                 Op::Nop => { self.current.ip += 1; },
                 /*
                 Op::Cons { sym_var, ref params } => todo!(),
+                Op::Delete(local) => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),
                 Op::RemoveSlot { local, index } => todo!(),
                 Op::GetLength(local) => todo!(),

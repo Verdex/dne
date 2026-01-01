@@ -106,31 +106,20 @@ impl Vm {
                         },
                     }
                 },
-                Op::SetLocalData(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::SetLocalData(local, ref data) => {
-                    self.current.locals[local] = data.clone();
+                    *self.mut_local(local)? = data.clone();
                     self.current.ip += 1;
                 },
                 Op::SetLocalReturn(_) if ret.is_none()  => {
                     return Err(VmError::AccessMissingReturn(self.stack_trace()));
                 },
-                Op::SetLocalReturn(local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
                 Op::SetLocalReturn(local) => {
-                    self.current.locals[local] = ret.as_ref().unwrap().clone();
+                    // TODO swap out?
+                    *self.mut_local(local)? = ret.as_ref().unwrap().clone();
                     self.current.ip += 1;
                 },
-                Op::SetLocalVar { src, .. } if src >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(src, self.stack_trace()));
-                },
-                Op::SetLocalVar { dest, .. } if dest >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(dest, self.stack_trace()));
-                },
                 Op::SetLocalVar { src, dest } => {
-                    self.current.locals[dest] = self.current.locals[src].clone();
+                    *self.mut_local(dest)? = self.get_local(src)?.clone();
                     self.current.ip += 1;
                 },
 
@@ -446,6 +435,13 @@ impl Vm {
             return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
         }
         Ok(&self.current.locals[local])
+    }
+
+    fn mut_local<'a>(&'a mut self, local: usize) -> Result<&'a mut RuntimeData, VmError> {
+        if local >= self.current.locals.len() {
+            return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+        }
+        Ok(&mut self.current.locals[local])
     }
 
     fn clone_locals(&self, locals: &[usize]) -> Result<Vec<RuntimeData>, VmError> {

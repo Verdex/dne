@@ -6,6 +6,7 @@ use crate::util::proj;
 use super::data::*;
 use super::error::*;
 
+#[derive(Debug)]
 enum Heap {
     Cons { name: Rc<str>, params: Vec<RuntimeData> },
     Nil,

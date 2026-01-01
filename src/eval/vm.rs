@@ -279,9 +279,16 @@ impl Vm {
                         _ => { return self.local_unexpected_type(sym_var, "symbol"); },
                     };
 
-                    // TODO pick first nil
-                    self.heap.push(Heap::Cons { name, params });
-                    ret = Some( RuntimeData::Ref( self.heap.len() ) );
+                    match self.heap.iter_mut().enumerate().find(|(_, x)| matches!(x, Heap::Nil)) {
+                        Some((addr, x)) => { 
+                            *x = Heap::Cons { name, params }; 
+                            ret = Some( RuntimeData::Ref( addr ) );
+                        },
+                        None => {
+                            self.heap.push(Heap::Cons { name, params });
+                            ret = Some( RuntimeData::Ref( self.heap.len() - 1 ) );
+                        },
+                    }
                     self.current.ip += 1;
                 },
                 Op::Delete(local) => todo!(),

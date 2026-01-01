@@ -148,6 +148,14 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Set { var, val: Expr::Lit(Lit::Float(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Float)?, RuntimeData::Float(*x))),
         Stmt::Set { var, val: Expr::Lit(Lit::Bool(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Bool)?, RuntimeData::Bool(*x))),
         Stmt::Set { var, val: Expr::Lit(Lit::ConsType(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Symbol)?, RuntimeData::Symbol(Rc::clone(x)))),
+        Stmt::Set { var, val: Expr::Cons { name, params }, .. } => { 
+            let target = access(l_map, &var, &proc.name, &Type::Ref)?;
+            let sym_var = access(l_map, &name, &proc.name, &Type::Symbol)?;
+            let params = params.iter().map(|x| any_access(l_map, x, &proc.name)).collect::<Result<Vec<usize>, _>>()?;
+            Ok( vec![LOp::Op(Op::Cons { sym_var, params }),
+                     LOp::Op(Op::SetLocalReturn(target))
+                    ] )
+        },
         Stmt::Set { var, val: Expr::Call { name, params }, .. } => {
             let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
             let local_index = access(l_map, &var, &proc.name, &callee_proc.return_type)?;

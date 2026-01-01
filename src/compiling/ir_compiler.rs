@@ -178,6 +178,7 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
 
             s(Op::SetLocalVar { src, dest })
         },
+        Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),
         _ => todo!(),
     }
     // TODO

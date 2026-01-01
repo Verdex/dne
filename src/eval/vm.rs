@@ -114,8 +114,7 @@ impl Vm {
                     return Err(VmError::AccessMissingReturn(self.stack_trace()));
                 },
                 Op::SetLocalReturn(local) => {
-                    // TODO swap out?
-                    *self.mut_local(local)? = ret.as_ref().unwrap().clone();
+                    *self.mut_local(local)? = std::mem::replace(&mut ret, None).unwrap();
                     self.current.ip += 1;
                 },
                 Op::SetLocalVar { src, dest } => {

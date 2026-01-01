@@ -8,10 +8,17 @@ use super::util::test;
 fn blarg() {
     let input = r"
 proc main() -> Bool {
-    set z : Symbol = ~blah;
-    set y : Symbol = ~blah;
-    set x : Bool = call eq_symbol(z, y);
-    return x;
+
+    set name : Symbol = ~blah;
+    set p1 : Int = 0;
+    set p2 : Float = 0.1;
+
+    set w : Ref = cons name (p1, p2);
+
+    delete w;
+
+    set ret : Bool = true;
+    return ret;
 }
 "; 
 

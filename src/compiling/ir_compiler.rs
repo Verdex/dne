@@ -188,7 +188,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Break,
     SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
     SlotRemove { var: Rc<str>, index: usize },
-    Delete(rc<str>)
     */
 
     // TODO
@@ -198,7 +197,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
     Closure { name : Rc<str>, params : Vec<Rc<str>> },
-    Cons { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),
     Length(Rc<str>),
     Type(Rc<str>),

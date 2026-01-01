@@ -172,6 +172,7 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Break,
     SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
     SlotRemove { var: Rc<str>, index: usize },
+    Delete(rc<str>)
     */
 
     // TODO

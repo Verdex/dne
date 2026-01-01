@@ -54,6 +54,7 @@ pub mod ir {
         DynCall,
         Closure,
         Cons,
+        Delete,
     }
 
     pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {
@@ -144,6 +145,7 @@ pub mod ir {
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
             "cons" => Token::Cons,
+            "delete" => Token::Delete,
             s => Token::Symbol(s.into()),
         };
 

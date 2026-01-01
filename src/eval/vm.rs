@@ -302,6 +302,7 @@ impl Vm {
                 Op::Delete(local) => {  
                     let addr = proj!(self.current.locals[local], RuntimeData::Ref(x), x);
                     self.heap[addr] = Heap::Nil;
+                    self.current.ip += 1;
                 },
 
                 Op::Nop => { self.current.ip += 1; },

@@ -54,6 +54,7 @@ pub enum Stmt {
     Label(Rc<str>),
     SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
     SlotRemove { var: Rc<str>, index: usize },
+    Delete(Rc<str>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -206,6 +207,11 @@ fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
             let index = expect_index(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::SlotRemove { var, index })
+        }
+        else if input.check(|x| x.eq(&Token::Delete))? {
+            let var = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::SemiColon))?;
+            ret.push(Stmt::Delete(var));
         }
         else {
             return Ok(ret);

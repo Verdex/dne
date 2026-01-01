@@ -121,6 +121,13 @@ fn access(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>, expected_type: &Ty
     }
 }
 
+fn any_access(l_map: &LMap, local: &Rc<str>, proc_name: &Rc<str>) -> Result<usize, CompileError> {
+    match l_map.get(local) {
+        Some((_, t)) => Ok(*t),
+        None => Err(CompileError::AccessMissingLocal { proc: Rc::clone(proc_name), local: Rc::clone(local) }),
+    }
+}
+
 fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LMap) -> Result<Vec<LOp>, CompileError> {
     
     fn s(x : Op) -> Result<Vec<LOp>, CompileError> { Ok(vec![LOp::Op(x)]) }

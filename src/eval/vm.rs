@@ -306,8 +306,6 @@ impl Vm {
 
                 Op::Nop => { self.current.ip += 1; },
                 /*
-                Op::Cons { sym_var, ref params } => todo!(),
-                Op::Delete(local) => todo!(),
                 Op::InsertSlot { dest, src, index } => todo!(),
                 Op::RemoveSlot { local, index } => todo!(),
                 Op::GetLength(local) => todo!(),

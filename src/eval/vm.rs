@@ -6,6 +6,43 @@ use crate::util::proj;
 use super::data::*;
 use super::error::*;
 
+macro_rules! proj_type {
+    ($self:expr, $local:expr, bool) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::Bool(_) ) {
+            $self.local_unexpected_type($local, "bool")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::Bool(x), x))
+        }
+    }};
+    ($self:expr, $local:expr, int) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::Int(_) ) {
+            $self.local_unexpected_type($local, "int")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::Int(x), x))
+        }
+    }};
+    ($self:expr, $local:expr, ref) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::Ref(_) ) {
+            $self.local_unexpected_type($local, "ref")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::Ref(x), x))
+        }
+    }};
+}
+
+
 #[derive(Debug)]
 enum Heap {
     Cons { name: Rc<str>, params: Vec<RuntimeData> },
@@ -52,15 +89,10 @@ impl Vm {
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
-                Op::DynCall(local, _) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::DynCall(local, _) if !matches!( self.current.locals[local], RuntimeData::Int(_) ) => { // TODO Int => Closure
-                    return self.local_unexpected_type(local, "Int");
-                },
                 Op::DynCall(local, ref params) => {
                     let proc_id = {
-                        let proc_id = proj!(self.current.locals[local], RuntimeData::Int(x), x); 
+                        // TODO Int => Closure
+                        let proc_id = proj_type!(self, local, int)?; 
                         match usize::try_from(proc_id) {
                             Ok(v) => v, 
                             Err(_) => { return self.local_unexpected_type(local, "proc_id"); },
@@ -75,14 +107,8 @@ impl Vm {
                 Op::Jump(label) => {
                     self.current.ip = label;
                 },
-                Op::BranchTrue { local, .. } if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::BranchTrue { local, .. } if !matches!( self.current.locals[local], RuntimeData::Bool(_) ) => {
-                    return self.local_unexpected_type(local, "bool");
-                },
                 Op::BranchTrue { label, local } => {
-                    let test = proj!(self.current.locals[local], RuntimeData::Bool(x), x);
+                    let test = proj_type!(self, local, bool)?;
                     if test {
                         self.current.ip = label;
                     }
@@ -282,14 +308,8 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
-                Op::Delete(local) if local >= self.current.locals.len() => {
-                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
-                },
-                Op::Delete(local) if !matches!( self.current.locals[local], RuntimeData::Ref(_) ) => {
-                    return self.local_unexpected_type(local, "ref");
-                },
                 Op::Delete(local) => {  
-                    let addr = proj!(self.current.locals[local], RuntimeData::Ref(x), x);
+                    let addr = proj_type!(self, local, ref)?;
                     self.heap[addr] = Heap::Nil;
                     self.current.ip += 1;
                 },

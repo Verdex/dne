@@ -272,6 +272,7 @@ impl Vm {
                     }
                     self.current.ip += 1;
                 },
+
                 Op::Cons { sym_var, ref params } => {
                     let params = self.clone_locals(params)?;
                     let name = match self.get_local(sym_var)? {
@@ -291,7 +292,17 @@ impl Vm {
                     }
                     self.current.ip += 1;
                 },
-                Op::Delete(local) => todo!(),
+
+                Op::Delete(local) if local >= self.current.locals.len() => {
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Delete(local) if !matches!( self.current.locals[local], RuntimeData::Ref(_) ) => {
+                    return self.local_unexpected_type(local, "ref");
+                },
+                Op::Delete(local) => {  
+                    let addr = proj!(self.current.locals[local], RuntimeData::Ref(x), x);
+                    self.heap[addr] = Heap::Nil;
+                },
 
                 Op::Nop => { self.current.ip += 1; },
                 /*

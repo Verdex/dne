@@ -326,10 +326,21 @@ impl Vm {
                     }
                     self.current.ip += 1;
                 },
+                
+                Op::RemoveSlot { local, index } => {
+                    let addr = proj_type!(self, local, ref)?;
+                    match &mut self.heap[addr] { 
+                        Heap::Nil => { return Err(VmError::AccessNilHeap(addr, self.stack_trace())); },
+                        Heap::Cons { params, .. } if index > params.len() => { return Err(VmError::AccessMissingSlotIndex { index, addr, stack_trace: self.stack_trace() }); },
+                        Heap::Cons { params, .. } => {
+                            params.remove(index); 
+                        },
+                    }
+                    self.current.ip += 1;
+                },
 
                 Op::Nop => { self.current.ip += 1; },
                 /*
-                Op::RemoveSlot { local, index } => todo!(),
                 Op::GetLength(local) => todo!(),
                 Op::GetType(local) => todo!(),
                 Op::GetSlot { local, index } => todo!(),

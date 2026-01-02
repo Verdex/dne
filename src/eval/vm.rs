@@ -339,9 +339,19 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::GetLength(local) => {
+                    let addr = proj_type!(self, local, ref)?;
+                    match &mut self.heap[addr] { 
+                        Heap::Nil => { return Err(VmError::AccessNilHeap(addr, self.stack_trace())); },
+                        Heap::Cons { params, .. } => {
+                            ret = Some(RuntimeData::Int(params.len().try_into().unwrap()));
+                        },
+                    }
+                    self.current.ip += 1;
+                },
+
                 Op::Nop => { self.current.ip += 1; },
                 /*
-                Op::GetLength(local) => todo!(),
                 Op::GetType(local) => todo!(),
                 Op::GetSlot { local, index } => todo!(),
 

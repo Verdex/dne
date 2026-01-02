@@ -5,6 +5,9 @@ pub type StackTrace = Vec<(Rc<str>, usize)>;
 
 #[derive(Debug)]
 pub enum VmError {
+    // TODO prune
+    AccessNilHeap(usize, StackTrace),
+    AccessMissingSlotIndex { addr: usize, index: usize, stack_trace: StackTrace },
     ProcDoesNotExist(usize, StackTrace),
     InstrPointerOutOfRange(usize, StackTrace),
     AccessMissingReturn(StackTrace),
@@ -22,6 +25,10 @@ impl std::fmt::Display for VmError {
         }
 
         match self { 
+            VmError::AccessMissingSlotIndex { addr, index, stack_trace } => 
+                write!(f, "Access missing slot index {} at address {}:  \n{}", index, addr, d(stack_trace)),
+            VmError::AccessNilHeap(addr, stack_trace) => 
+                write!(f, "Access nil heap at address {}:  \n{}", addr, d(stack_trace)),
             VmError::LocalUnexpectedType{local, stack_trace, expected, found } => 
                 write!(f, "Local {} was unexpected type.  Expected: {}, but found {}: \n{}", local, expected, found, d(stack_trace) ),
             VmError::ProcDoesNotExist(proc_index, trace) => 

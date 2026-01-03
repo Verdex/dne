@@ -185,6 +185,20 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             Ok(vec![LOp::Op(Op::GetSlot { local: src, index: *index }),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
+        Stmt::Set { var: dest, val: Expr::Length(src), .. } => {
+            let src = access(l_map, &src, &proc.name, &Type::Ref)?; 
+            let dest = access(l_map, &dest, &proc.name, &Type::Int)?;
+
+            Ok(vec![LOp::Op(Op::GetLength(src)),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
+        Stmt::Set { var: dest, val: Expr::Type(src), .. } => {
+            let src = access(l_map, &src, &proc.name, &Type::Ref)?; 
+            let dest = access(l_map, &dest, &proc.name, &Type::Symbol)?;
+
+            Ok(vec![LOp::Op(Op::GetType(src)),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
         Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),
         _ => todo!(),
     }
@@ -205,8 +219,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
     Closure { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),
-    Length(Rc<str>),
-    Type(Rc<str>),
     */
 }
 

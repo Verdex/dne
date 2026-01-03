@@ -6,6 +6,48 @@ use crate::eval::error::VmError;
 use super::util::{ test, test_fails };
 
 #[test]
+fn should_get_type() {
+    let input = r"
+proc main() -> Symbol {
+
+    set name : Symbol = ~blah;
+    set p1 : Int = 2;
+    set p2 : Float = 0.1;
+
+    set cell : Ref = cons name (p1, p2);
+
+    set ret : Symbol = type cell;
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Symbol(x), x);
+    assert_eq!(output, "blah".into());
+}
+
+#[test]
+fn should_get_length() {
+    let input = r"
+proc main() -> Int {
+
+    set name : Symbol = ~blah;
+    set p1 : Int = 2;
+    set p2 : Float = 0.1;
+
+    set cell : Ref = cons name (p1, p2);
+
+    set ret : Int = length cell;
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 2);
+}
+
+#[test]
 fn should_get_slot() {
     let input = r"
 proc main() -> Float {

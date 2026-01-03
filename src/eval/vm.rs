@@ -350,10 +350,31 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::GetType(local) => {
+                    let addr = proj_type!(self, local, ref)?;
+                    match &mut self.heap[addr] { 
+                        Heap::Nil => { return Err(VmError::AccessNilHeap(addr, self.stack_trace())); },
+                        Heap::Cons { name, .. } => {
+                            ret = Some(RuntimeData::Symbol(Rc::clone(name)));
+                        },
+                    }
+                    self.current.ip += 1;
+                },
+
+                Op::GetSlot { local, index } => {
+                    let addr = proj_type!(self, local, ref)?;
+                    match &mut self.heap[addr] { 
+                        Heap::Nil => { return Err(VmError::AccessNilHeap(addr, self.stack_trace())); },
+                        Heap::Cons { params, .. } if index > params.len() => { return Err(VmError::AccessMissingSlotIndex { index, addr, stack_trace: self.stack_trace() }); },
+                        Heap::Cons { params, .. } => {
+                            ret = Some(params[index].clone());
+                        },
+                    }
+                    self.current.ip += 1;
+                },
+
                 Op::Nop => { self.current.ip += 1; },
                 /*
-                Op::GetType(local) => todo!(),
-                Op::GetSlot { local, index } => todo!(),
 
                 Op::Resume(local) => todo!(),
                 Op::Closure { proc_id, env } => todo!(),

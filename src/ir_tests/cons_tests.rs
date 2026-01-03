@@ -6,6 +6,64 @@ use crate::eval::error::VmError;
 use super::util::{ test, test_fails };
 
 #[test]
+fn should_remove_slot() {
+    let input = r"
+proc main() -> Int {
+
+    set name : Symbol = ~blah;
+    set p1 : Int = 2;
+    set p2 : Float = 0.1;
+
+    set cell : Ref = cons name (p2, p1);
+
+    slot_remove cell 0;
+
+    set a : Int = slot cell 0;
+    set len : Int = length cell;
+
+    set ret : Int = call add_int(len, a);
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 3);
+}
+
+#[test]
+fn should_insert_slot() {
+    let input = r"
+proc main() -> Int {
+
+    set name : Symbol = ~blah;
+    set p1 : Int = 2;
+    set p2 : Float = 0.1;
+    set p3 : Int = 10;
+
+    set cell : Ref = cons name (p1, p2);
+
+    slot_insert cell p3 2;
+    slot_insert cell p3 0;
+
+    set a : Int = slot cell 0;
+    set b : Int = slot cell 3;
+
+    set ret : Int = call add_int(a, b);
+
+    set len : Int = length cell;
+
+    set ret : Int = call add_int(ret, len);
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 24);
+}
+
+#[test]
 fn should_get_type() {
     let input = r"
 proc main() -> Symbol {

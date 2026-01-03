@@ -199,6 +199,17 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             Ok(vec![LOp::Op(Op::GetType(src)),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
+        Stmt::SlotInsert { var, input, index } => {
+            let src = any_access(l_map, &input, &proc.name)?;
+            let dest = access(l_map, &var, &proc.name, &Type::Ref)?;
+
+            s(Op::InsertSlot { dest, src, index: *index })
+        },
+        Stmt::SlotRemove { var, index } => {
+            let local = access(l_map, &var, &proc.name, &Type::Ref)?;
+
+            s(Op::RemoveSlot { local, index: *index })
+        },
         Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),
         _ => todo!(),
     }
@@ -207,8 +218,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     Set { var: Rc<str>, ttype : Type, val: Expr },
     Yield(Rc<str>),
     Break,
-    SlotInsert { var: Rc<str>, input: Rc<str>, index: usize },
-    SlotRemove { var: Rc<str>, index: usize },
     */
 
     // TODO

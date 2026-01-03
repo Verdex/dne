@@ -179,10 +179,10 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             s(Op::SetLocalVar { src, dest })
         },
         Stmt::Set { var: dest, val: Expr::Slot { var: src, index }, .. } => {
-            let src = access(l_map, &src, &Type::Ref)?; 
-            let dest = any_access(l_map, &dest)?;
+            let src = access(l_map, &src, &proc.name, &Type::Ref)?; 
+            let dest = any_access(l_map, &dest, &proc.name)?;
 
-            Ok(vec![LOp::Op(Op::GetSlot { local: src, index }),
+            Ok(vec![LOp::Op(Op::GetSlot { local: src, index: *index }),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
         Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),

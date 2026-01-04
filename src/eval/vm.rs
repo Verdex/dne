@@ -40,6 +40,17 @@ macro_rules! proj_type {
             Ok(proj!($self.current.locals[$local], RuntimeData::Ref(x), x))
         }
     }};
+    ($self:expr, $local:expr, closure) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::Closure { .. } ) {
+            $self.local_unexpected_type($local, "closure")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::Closure { proc_id, ref env }, (proc_id, env)))
+        }
+    }};
 }
 
 
@@ -90,17 +101,14 @@ impl Vm {
                     self.frames.push(current);
                 },
                 Op::DynCall(local, ref params) => {
-                    let proc_id = {
-                        // TODO Int => Closure
-                        let proc_id = proj_type!(self, local, int)?; 
-                        match usize::try_from(proc_id) {
-                            Ok(v) => v, 
-                            Err(_) => { return self.local_unexpected_type(local, "proc_id"); },
-                        }
-                    };
-                    let mut new_locals = self.clone_locals(params)?;
+                    let (proc_id, env) = proj_type!(self, local, closure)?; 
+                    let env_and_param_len = env.len() + params.len();
+                    let mut new_locals = env.clone();
+                    let mut params = self.clone_locals(params)?;
+                    new_locals.append(&mut params);
                     self.current.ip += 1;
-                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params.len()).collect());
+
+                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - env_and_param_len).collect());
                     let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
                     self.frames.push(current);
                 },
@@ -221,12 +229,16 @@ impl Vm {
                         (RuntimeData::Nil, RuntimeData::Nil) => { ret = Some( RuntimeData::Bool(true) ); },
                         (RuntimeData::Ref(a), RuntimeData::Ref(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
 
+                        // TODO ?
+                        (RuntimeData::Closure { .. }, RuntimeData::Closure { .. }) => { ret = Some( RuntimeData::Bool(false) ); },
+
                         (RuntimeData::Float(a), _) => { return self.local_unexpected_type(b, "float"); },
                         (RuntimeData::Int(a), _) => { return self.local_unexpected_type(b, "int"); },
                         (RuntimeData::Bool(a), _) => { return self.local_unexpected_type(b, "bool"); },
                         (RuntimeData::Symbol(a), _) => { return self.local_unexpected_type(b, "symbol"); },
                         (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "nil"); },
                         (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "ref"); }, 
+                        (RuntimeData::Closure { .. }, _) => { return self.local_unexpected_type(b, "closure"); },
                     }
                     self.current.ip += 1;
                 },
@@ -373,11 +385,19 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::Closure { proc_id, .. } if proc_id >= self.procs.len() => {
+                    return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
+                },
+                Op::Closure { proc_id, ref env } => {
+                    let env = self.clone_locals(env)?;
+                    ret = Some(RuntimeData::Closure { proc_id, env });
+                    self.current.ip += 1;
+                },
+
                 Op::Nop => { self.current.ip += 1; },
                 /*
 
                 Op::Resume(local) => todo!(),
-                Op::Closure { proc_id, env } => todo!(),
                 Op::Coroutine { proc_id, params } => todo!(),
                 // TODO fix 
                 Op::DynCoroutine { proc_id, params } => todo!(),

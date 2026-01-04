@@ -8,8 +8,9 @@ pub enum RuntimeData {
     Float(f64),
     Symbol(Rc<str>),
     Ref(usize),
+    Closure { proc_id: usize, env: Vec<RuntimeData> },
     Nil,
-    // TODO closure, coroutine, string
+    // TODO coroutine, string
 }
 
 #[derive(Debug)]

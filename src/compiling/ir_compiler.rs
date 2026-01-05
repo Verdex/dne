@@ -172,11 +172,21 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
                     LOp::Op(Op::SetLocalReturn(local_index))
                     ])
         },
+        Stmt::Set { var, val: Expr::DynCall { name, params }, .. } => {
+            let closure = access(l_map, &name, &proc.name, &Type::Closure)?;
+            let dest = any_access(l_map, &var, &proc.name)?;
+
+            let params = params.iter().map(|p| any_access(l_map, p, &proc.name)).collect::<Result<Vec<_>, CompileError>>()?;
+
+            Ok(vec![LOp::Op(Op::DynCall(closure, params)), 
+                    LOp::Op(Op::SetLocalReturn(dest))
+                    ])
+        },
         Stmt::Set { var, val: Expr::Closure { name, env }, .. } => {
             let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
             let dest = access(l_map, &var, &proc.name, &Type::Closure)?;
 
-            if env.len() != callee_proc.params.len() {
+            if env.len() > callee_proc.params.len() {
                 return Err(CompileError::ProcCallArityMismatch { caller_proc: Rc::clone(&proc.name), callee_proc: Rc::clone(&callee_proc.name) });
             }
             // Note:  This is checking that the first params of the closure function accept the

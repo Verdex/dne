@@ -172,6 +172,23 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
                     LOp::Op(Op::SetLocalReturn(local_index))
                     ])
         },
+        Stmt::Set { var, val: Expr::Closure { name, env }, .. } => {
+            let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
+            let dest = access(l_map, &var, &proc.name, &Type::Closure)?;
+
+            if env.len() != callee_proc.params.len() {
+                return Err(CompileError::ProcCallArityMismatch { caller_proc: Rc::clone(&proc.name), callee_proc: Rc::clone(&callee_proc.name) });
+            }
+            // Note:  This is checking that the first params of the closure function accept the
+            // capture environment locals.
+            let env_indices = env.iter().zip(callee_proc.params.iter())
+                         .map(|(local, (_, ttype))| access(l_map, local, &proc.name, ttype))
+                         .collect::<Result<Vec<_>, CompileError>>()?;
+
+            Ok(vec![LOp::Op(Op::Closure { proc_id: *callee_index, env: env_indices } ),
+                    LOp::Op(Op::SetLocalReturn(dest))
+                   ])
+        },
         Stmt::Set { var, ttype, val: Expr::Var(src) } => {
             let src = access(l_map, &src, &proc.name, ttype)?;
             let dest = access(l_map, &var, &proc.name, ttype)?;

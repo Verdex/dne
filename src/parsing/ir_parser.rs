@@ -85,8 +85,7 @@ pub enum Expr {
     DynCall { name : Rc<str>, params : Vec<Rc<str>> },
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
-    // TODO params => captures
-    Closure { name : Rc<str>, params : Vec<Rc<str>> },
+    Closure { name : Rc<str>, env : Vec<Rc<str>> },
     Cons { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),
     Length(Rc<str>),
@@ -304,8 +303,8 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
     }
     else if input.check(|x| x.eq(&Token::Closure))? {
         let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::Closure { name, params })
+        let env = expect_params(input)?;
+        Ok(Expr::Closure { name, env })
     }
     else if input.check(|x| x.eq(&Token::Cons))? {
         let name = expect_sym(input)?;

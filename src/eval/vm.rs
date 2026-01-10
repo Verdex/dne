@@ -44,11 +44,22 @@ macro_rules! proj_type {
         if $local >= $self.current.locals.len() {
            Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
         }
-        else if !matches!( $self.current.locals[$local], RuntimeData::Closure ( _ ) ) {
+        else if !matches!( $self.current.locals[$local], RuntimeData::Closure(_) ) {
             $self.local_unexpected_type($local, "closure")
         }
         else {
-            Ok(proj!($self.current.locals[$local], RuntimeData::Closure(Closure { proc_id, ref env } ), (proc_id, env)))
+            Ok(proj!($self.current.locals[$local], RuntimeData::Closure(ref x), x))
+        }
+    }};
+    ($self:expr, $local:expr, coroutine) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::Coroutine(_) ) {
+            $self.local_unexpected_type($local, "coroutine")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::Coroutine(ref x), x))
         }
     }};
 }
@@ -101,7 +112,8 @@ impl Vm {
                     self.frames.push(current);
                 },
                 Op::DynCall(local, ref params) => {
-                    let (proc_id, env) = proj_type!(self, local, closure)?; 
+                    let Closure { proc_id, env } = proj_type!(self, local, closure)?; 
+                    let proc_id = *proc_id;
                     let env_and_param_len = env.len() + params.len();
                     let mut new_locals = env.clone();
                     let mut params = self.clone_locals(params)?;
@@ -404,11 +416,16 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::DynCoroutine { local, ref params } => {
+                    let closure = proj_type!(self, local, closure)?.clone();
+                    let params = self.clone_locals(params)?;
+                    ret = Some(RuntimeData::Coroutine(Coroutine::DynStart { closure, params }));
+                    self.current.ip += 1;
+                },
                 Op::Nop => { self.current.ip += 1; },
                 /*
 
                 Op::Resume(local) => todo!(),
-                Op::DynCoroutine { local, params } => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),
                 */

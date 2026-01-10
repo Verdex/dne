@@ -32,8 +32,7 @@ pub enum Op {
     Closure { proc_id: usize, env: Vec<usize> },
     Cons { sym_var: usize, params: Vec<usize> },
     Coroutine { proc_id: usize, params: Vec<usize> },
-    // TODO proc_id for dyn coroutine has to be a local that is a coroutine
-    DynCoroutine { proc_id: usize, params: Vec<usize> },
+    DynCoroutine { local: usize, params: Vec<usize> },
     Yield(usize),
     Break,
     InsertSlot { dest: usize, src: usize, index: usize },

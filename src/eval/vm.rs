@@ -422,10 +422,31 @@ impl Vm {
                     ret = Some(RuntimeData::Coroutine(Coroutine::DynStart { closure, params }));
                     self.current.ip += 1;
                 },
+
+                Op::Resume(local) => {
+                    match proj_type!(self, local, coroutine)? {
+                        Coroutine::Active(frame) => {
+                            self.current.ip += 1;
+                            let current = std::mem::replace(&mut self.current, frame);
+                            self.frames.push(current);
+                        },
+                        Coroutine::Start { proc_id, params } => {
+                            self.current.ip += 1;
+                            todo!()
+                        },
+                        Coroutine::DynStart { closure, params } => {
+                            self.current.ip += 1;
+                            todo!()
+                        },
+                        Coroutine::Ended => {
+                            ret = Some(RuntimeData::Nil);
+                            self.current.ip += 1;
+                        },
+                    }
+                },
                 Op::Nop => { self.current.ip += 1; },
                 /*
 
-                Op::Resume(local) => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),
                 */

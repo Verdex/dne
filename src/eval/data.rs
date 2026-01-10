@@ -3,6 +3,11 @@ use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum Coroutine {
+    Active(Frame),
+    Start { proc_id: usize, params: Vec<RuntimeData> },
+    DynStart { closure: Closure, params: Vec<RuntimeData> },
+    Ended,
+}
 
 #[derive(Debug, Clone)]
 pub struct Closure {

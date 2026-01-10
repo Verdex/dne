@@ -395,12 +395,20 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::Coroutine { proc_id, .. } if proc_id >= self.procs.len() => {
+                    return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
+                },
+                Op::Coroutine { proc_id, ref params } => {
+                    let params = self.clone_locals(params)?;
+                    ret = Some(RuntimeData::Coroutine(Coroutine::Start{ proc_id, params }));
+                    self.current.ip += 1;
+                },
+
                 Op::Nop => { self.current.ip += 1; },
                 /*
 
                 Op::Resume(local) => todo!(),
-                Op::Coroutine { proc_id, params } => todo!(),
-                Op::DynCoroutine { proc_id, params } => todo!(),
+                Op::DynCoroutine { local, params } => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),
                 */

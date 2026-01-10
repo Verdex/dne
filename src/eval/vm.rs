@@ -229,8 +229,8 @@ impl Vm {
                         (RuntimeData::Nil, RuntimeData::Nil) => { ret = Some( RuntimeData::Bool(true) ); },
                         (RuntimeData::Ref(a), RuntimeData::Ref(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
 
-                        // TODO ?
                         (RuntimeData::Closure { .. }, RuntimeData::Closure { .. }) => { ret = Some( RuntimeData::Bool(false) ); },
+                        (RuntimeData::Coroutine(_), RuntimeData::Coroutine(_)) => { ret = Some( RuntimeData::Bool(false) ); },
 
                         (RuntimeData::Float(a), _) => { return self.local_unexpected_type(b, "float"); },
                         (RuntimeData::Int(a), _) => { return self.local_unexpected_type(b, "int"); },
@@ -239,6 +239,7 @@ impl Vm {
                         (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "nil"); },
                         (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "ref"); }, 
                         (RuntimeData::Closure { .. }, _) => { return self.local_unexpected_type(b, "closure"); },
+                        (RuntimeData::Coroutine(_), _) => { return self.local_unexpected_type(b, "coroutine"); },
                     }
                     self.current.ip += 1;
                 },
@@ -552,9 +553,3 @@ impl Vm {
     }
 }
 
-fn co_is_running(coroutine : &Coroutine) -> bool {
-    match coroutine { 
-        Coroutine::Running => true,
-        _ => false,
-    }
-}

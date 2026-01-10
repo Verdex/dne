@@ -2,6 +2,11 @@
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
+pub enum Coroutine {
+
+}
+
+#[derive(Debug, Clone)]
 pub enum RuntimeData {
     Bool(bool),
     Int(i64),
@@ -9,6 +14,7 @@ pub enum RuntimeData {
     Symbol(Rc<str>),
     Ref(usize),
     Closure { proc_id: usize, env: Vec<RuntimeData> },
+    Coroutine(Coroutine),
     Nil,
     // TODO coroutine, string
 }
@@ -68,18 +74,3 @@ pub struct Frame {
     pub locals : Vec<RuntimeData>,
 }
 
-#[derive(Clone)]
-pub enum Coroutine {
-    Active(Frame),
-    Running,
-    Finished,
-}
-
-impl Coroutine {
-    pub fn is_alive(&self) -> bool {
-        match self { 
-            Coroutine::Active(_) | Coroutine::Running => true,
-            _ => false,
-        }
-    }
-}

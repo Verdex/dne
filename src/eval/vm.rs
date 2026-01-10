@@ -44,11 +44,11 @@ macro_rules! proj_type {
         if $local >= $self.current.locals.len() {
            Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
         }
-        else if !matches!( $self.current.locals[$local], RuntimeData::Closure { .. } ) {
+        else if !matches!( $self.current.locals[$local], RuntimeData::Closure ( _ ) ) {
             $self.local_unexpected_type($local, "closure")
         }
         else {
-            Ok(proj!($self.current.locals[$local], RuntimeData::Closure { proc_id, ref env }, (proc_id, env)))
+            Ok(proj!($self.current.locals[$local], RuntimeData::Closure(Closure { proc_id, ref env } ), (proc_id, env)))
         }
     }};
 }
@@ -391,7 +391,7 @@ impl Vm {
                 },
                 Op::Closure { proc_id, ref env } => {
                     let env = self.clone_locals(env)?;
-                    ret = Some(RuntimeData::Closure { proc_id, env });
+                    ret = Some(RuntimeData::Closure (Closure { proc_id, env }));
                     self.current.ip += 1;
                 },
 
@@ -400,7 +400,6 @@ impl Vm {
 
                 Op::Resume(local) => todo!(),
                 Op::Coroutine { proc_id, params } => todo!(),
-                // TODO fix 
                 Op::DynCoroutine { proc_id, params } => todo!(),
                 Op::Yield(local) => todo!(),
                 Op::Break => todo!(),

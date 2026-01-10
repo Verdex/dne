@@ -4,6 +4,10 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub enum Coroutine {
 
+#[derive(Debug, Clone)]
+pub struct Closure {
+    pub proc_id: usize, 
+    pub env: Vec<RuntimeData>,
 }
 
 #[derive(Debug, Clone)]
@@ -13,10 +17,10 @@ pub enum RuntimeData {
     Float(f64),
     Symbol(Rc<str>),
     Ref(usize),
-    Closure { proc_id: usize, env: Vec<RuntimeData> },
+    Closure(Closure),
     Coroutine(Coroutine),
     Nil,
-    // TODO coroutine, string
+    // TODO string
 }
 
 #[derive(Debug)]
@@ -67,7 +71,7 @@ pub struct Proc {
     pub stack_size : usize,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Frame {
     pub proc_id : usize,
     pub ip : usize,

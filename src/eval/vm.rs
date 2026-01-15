@@ -464,6 +464,28 @@ impl Vm {
                         Coroutine::Running(_) => unreachable!("Swapped a running coroutine"),
                     }
                 },
+
+                Op::Yield(local) => {
+                    ret = Some(self.get_local(local)?.clone());
+
+                    match self.frames.pop() {
+                        None => {
+                            return Err(VmError::TopLevelYield(self.current.ip));
+                        },
+                        Some(frame) => {
+                            self.current.ip += 1;
+                            let coroutine = std::mem::replace(&mut self.current, frame);
+                            match self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running(_)) => true, _ => false }) {
+                                Some(index) => {
+                                    self.current.locals[index] = RuntimeData::Coroutine(Coroutine::Active(coroutine));
+                                },
+                                None => {
+                                    todo!()
+                                },
+                            }
+                        },
+                    }
+                },
                 Op::Nop => { self.current.ip += 1; },
                 /*
 

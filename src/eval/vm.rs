@@ -51,7 +51,7 @@ macro_rules! proj_type {
             Ok(proj!($self.current.locals[$local], RuntimeData::Closure(ref x), x))
         }
     }};
-    ($self:expr, $local:expr, coroutine) => {{
+    ($self:expr, $local:expr, coroutine) => {{ // TODO make sure this is actually being used
         if $local >= $self.current.locals.len() {
            Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
         }
@@ -435,13 +435,21 @@ impl Vm {
                     self.current.ip += 1;
                 },
 
+                Op::Resume(local) if local >= self.current.locals.len() => { 
+                    return Err(VmError::AccessMissingLocal(local, self.stack_trace()));
+                },
+                Op::Resume(local) if !matches!(self.current.locals[local], RuntimeData::Coroutine(_)) => {
+                    return self.local_unexpected_type(local, "coroutine");
+                },
                 Op::Resume(local) => {
-                    match proj_type!(self, local, coroutine)? {
+                    let coroutine = std::mem::replace(&mut self.current.locals[local], RuntimeData::Coroutine(Coroutine::Running(local)));
+                    let coroutine = proj!(coroutine, RuntimeData::Coroutine(x), x);
+                    
+                    match coroutine {
                         Coroutine::Active(frame) => {
-                           /* self.current.ip += 1;
+                            self.current.ip += 1;
                             let current = std::mem::replace(&mut self.current, frame);
                             self.frames.push(current);
-                            */
                         },
                         Coroutine::Start { proc_id, params } => {
                             self.current.ip += 1;
@@ -455,6 +463,7 @@ impl Vm {
                             ret = Some(RuntimeData::Nil);
                             self.current.ip += 1;
                         },
+                        Coroutine::Running(_) => unreachable!("Swapped a running coroutine"),
                     }
                 },
                 Op::Nop => { self.current.ip += 1; },

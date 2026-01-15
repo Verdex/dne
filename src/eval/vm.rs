@@ -429,7 +429,7 @@ impl Vm {
                     return self.local_unexpected_type(local, "coroutine");
                 },
                 Op::Resume(local) => {
-                    let coroutine = std::mem::replace(&mut self.current.locals[local], RuntimeData::Coroutine(Coroutine::Running(local)));
+                    let coroutine = std::mem::replace(&mut self.current.locals[local], RuntimeData::Coroutine(Coroutine::Running));
                     let coroutine = proj!(coroutine, RuntimeData::Coroutine(x), x);
                     
                     match coroutine {
@@ -461,7 +461,7 @@ impl Vm {
                             ret = Some(RuntimeData::Nil);
                             self.current.ip += 1;
                         },
-                        Coroutine::Running(_) => unreachable!("Swapped a running coroutine"),
+                        Coroutine::Running => unreachable!("Swapped a running coroutine"),
                     }
                 },
 
@@ -475,7 +475,7 @@ impl Vm {
                         Some(frame) => {
                             self.current.ip += 1;
                             let coroutine = std::mem::replace(&mut self.current, frame);
-                            match self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running(_)) => true, _ => false }) {
+                            match self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running) => true, _ => false }) {
                                 Some(index) => {
                                     self.current.locals[index] = RuntimeData::Coroutine(Coroutine::Active(coroutine));
                                 },

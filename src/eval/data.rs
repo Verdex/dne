@@ -4,7 +4,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub enum Coroutine {
     Active(Frame),
-    Running(usize),
+    Running,
     Start { proc_id: usize, params: Vec<RuntimeData> },
     DynStart { closure: Closure, params: Vec<RuntimeData> },
     Ended,

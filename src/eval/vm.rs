@@ -481,12 +481,25 @@ impl Vm {
                         },
                     }
                 },
-                Op::Nop => { self.current.ip += 1; },
-                /*
 
-                Op::Yield(local) => todo!(),
-                Op::Break => todo!(),
-                */
+                Op::Break => {
+                    ret = Some(RuntimeData::Nil);
+
+                    match self.frames.pop() {
+                        None => {
+                            return Err(VmError::TopLevelYield(self.current.ip));
+                        },
+                        Some(frame) => {
+                            self.current = frame;
+                            let index = self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running) => true, _ => false })
+                                        .expect("Could not find Coroutine::Running placeholder");
+                            self.current.locals[index] = RuntimeData::Coroutine(Coroutine::Ended);
+                        },
+                    }
+                }
+
+                Op::Nop => { self.current.ip += 1; },
+
                 _ => todo!(),
                 /*
                 Op::CoYield(slot) => {

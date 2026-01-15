@@ -64,33 +64,6 @@ macro_rules! proj_type {
     }};
 }
 
-macro_rules! call {
-    ($self:expr, $proc_id:expr, $params:expr) => {
-        let mut new_locals = $self.clone_locals($params)?;
-        $self.current.ip += 1;
-        new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take($self.procs[$proc_id].stack_size - $params.len()).collect());
-        let current = std::mem::replace(&mut $self.current, Frame { proc_id: $proc_id, ip: 0, locals: new_locals });
-        $self.frames.push(current);
-    }
-}
-
-macro_rules! dyn_call {
-    ($self:expr, $closure:expr, $params:expr) => {
-        let Closure { proc_id, env } = $closure; 
-        let proc_id = *proc_id;
-        let env_and_param_len = env.len() + $params.len();
-        let mut new_locals = env.clone();
-        let mut params = $self.clone_locals($params)?;
-        new_locals.append(&mut params);
-        $self.current.ip += 1;
-
-        new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take($self.procs[proc_id].stack_size - env_and_param_len).collect());
-        let current = std::mem::replace(&mut $self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
-        $self.frames.push(current);
-    }
-}
-
-
 #[derive(Debug)]
 enum Heap {
     Cons { name: Rc<str>, params: Vec<RuntimeData> },
@@ -131,10 +104,24 @@ impl Vm {
                     return Err(VmError::ProcDoesNotExist(self.current.proc_id, self.stack_trace()));
                 },
                 Op::Call(proc_id, ref params) => {
-                    call!(self, proc_id, params);
+                    let mut new_locals = self.clone_locals(params)?;
+                    self.current.ip += 1;
+                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params.len()).collect());
+                    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
+                    self.frames.push(current);
                 },
                 Op::DynCall(local, ref params) => {
-                    dyn_call!(self, proj_type!(self, local, closure)?, params);
+                    let Closure { proc_id, env } = proj_type!(self, local, closure)?; 
+                    let proc_id = *proc_id;
+                    let env_and_param_len = env.len() + params.len();
+                    let mut new_locals = env.clone();
+                    let mut params = self.clone_locals(params)?;
+                    new_locals.append(&mut params);
+                    self.current.ip += 1;
+
+                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - env_and_param_len).collect());
+                    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
+                    self.frames.push(current);
                 },
                 Op::Jump(label) => {
                     self.current.ip = label;

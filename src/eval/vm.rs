@@ -475,14 +475,9 @@ impl Vm {
                         Some(frame) => {
                             self.current.ip += 1;
                             let coroutine = std::mem::replace(&mut self.current, frame);
-                            match self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running) => true, _ => false }) {
-                                Some(index) => {
-                                    self.current.locals[index] = RuntimeData::Coroutine(Coroutine::Active(coroutine));
-                                },
-                                None => {
-                                    todo!()
-                                },
-                            }
+                            let index = self.current.locals.iter().position(|x| match x { RuntimeData::Coroutine(Coroutine::Running) => true, _ => false })
+                                        .expect("Could not find Coroutine::Running placeholder");
+                            self.current.locals[index] = RuntimeData::Coroutine(Coroutine::Active(coroutine));
                         },
                     }
                 },

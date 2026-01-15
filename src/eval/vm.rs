@@ -75,8 +75,8 @@ macro_rules! call {
 }
 
 macro_rules! dyn_call {
-    ($self:expr, $local:expr, $params:expr) => {
-        let Closure { proc_id, env } = proj_type!($self, $local, closure)?; 
+    ($self:expr, $closure:expr, $params:expr) => {
+        let Closure { proc_id, env } = $closure; 
         let proc_id = *proc_id;
         let env_and_param_len = env.len() + $params.len();
         let mut new_locals = env.clone();
@@ -134,7 +134,7 @@ impl Vm {
                     call!(self, proc_id, params);
                 },
                 Op::DynCall(local, ref params) => {
-                    dyn_call!(self, local, params);
+                    dyn_call!(self, proj_type!(self, local, closure)?, params);
                 },
                 Op::Jump(label) => {
                     self.current.ip = label;

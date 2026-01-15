@@ -74,20 +74,21 @@ macro_rules! call {
     }
 }
 
-/*fn dyn_call(&mut self, local: usize, params: &[usize]) -> Result<(), VmError> {
-    let Closure { proc_id, env } = proj_type!(self, local, closure)?; 
-    let proc_id = *proc_id;
-    let env_and_param_len = env.len() + params.len();
-    let mut new_locals = env.clone();
-    let mut params = self.clone_locals(params)?;
-    new_locals.append(&mut params);
-    self.current.ip += 1;
+macro_rules! dyn_call {
+    ($self:expr, $local:expr, $params:expr) => {
+        let Closure { proc_id, env } = proj_type!($self, $local, closure)?; 
+        let proc_id = *proc_id;
+        let env_and_param_len = env.len() + $params.len();
+        let mut new_locals = env.clone();
+        let mut params = $self.clone_locals($params)?;
+        new_locals.append(&mut params);
+        $self.current.ip += 1;
 
-    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - env_and_param_len).collect());
-    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
-    self.frames.push(current);
-    Ok(())
-}*/
+        new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take($self.procs[proc_id].stack_size - env_and_param_len).collect());
+        let current = std::mem::replace(&mut $self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
+        $self.frames.push(current);
+    }
+}
 
 
 #[derive(Debug)]
@@ -133,17 +134,7 @@ impl Vm {
                     call!(self, proc_id, params);
                 },
                 Op::DynCall(local, ref params) => {
-                    let Closure { proc_id, env } = proj_type!(self, local, closure)?; 
-                    let proc_id = *proc_id;
-                    let env_and_param_len = env.len() + params.len();
-                    let mut new_locals = env.clone();
-                    let mut params = self.clone_locals(params)?;
-                    new_locals.append(&mut params);
-                    self.current.ip += 1;
-
-                    new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - env_and_param_len).collect());
-                    let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
-                    self.frames.push(current);
+                    dyn_call!(self, local, params);
                 },
                 Op::Jump(label) => {
                     self.current.ip = label;

@@ -439,12 +439,23 @@ impl Vm {
                             self.frames.push(current);
                         },
                         Coroutine::Start { proc_id, params } => {
+                            let params_len = params.len();
+                            let mut new_locals = params;
                             self.current.ip += 1;
-                            todo!()
+                            new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - params_len).collect());
+                            let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
+                            self.frames.push(current);
                         },
-                        Coroutine::DynStart { closure, params } => {
+                        Coroutine::DynStart { closure, mut params } => {
+                            let Closure { proc_id, env } = closure; 
+                            let env_and_param_len = env.len() + params.len();
+                            let mut new_locals = env;
+                            new_locals.append(&mut params);
                             self.current.ip += 1;
-                            todo!()
+
+                            new_locals.append(&mut std::iter::repeat(RuntimeData::Nil).take(self.procs[proc_id].stack_size - env_and_param_len).collect());
+                            let current = std::mem::replace(&mut self.current, Frame { proc_id: proc_id, ip: 0, locals: new_locals });
+                            self.frames.push(current);
                         },
                         Coroutine::Ended => {
                             ret = Some(RuntimeData::Nil);

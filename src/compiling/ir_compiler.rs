@@ -238,22 +238,20 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             s(Op::RemoveSlot { local, index: *index })
         },
         Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),
+        Stmt::Break => s(Op::Break),
+        Stmt::Yield(local) => s(Op::Yield(access(l_map, local, &proc.name, &proc.return_type)?)),
         _ => todo!(),
     }
     // TODO
     /*
     Set { var: Rc<str>, ttype : Type, val: Expr },
-    Yield(Rc<str>),
-    Break,
     */
 
     // TODO
     /*
 
-    DynCall { name : Rc<str>, params : Vec<Rc<str>> },
     Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
     DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
-    Closure { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),
     */
 }

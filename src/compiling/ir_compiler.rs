@@ -271,7 +271,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Delete(local) => s(Op::Delete(access(l_map, local, &proc.name, &Type::Ref)?)),
         Stmt::Break => s(Op::Break),
         Stmt::Yield(local) => s(Op::Yield(access(l_map, local, &proc.name, &proc.return_type)?)),
-        _ => todo!(),
     }
 }
 

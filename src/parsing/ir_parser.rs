@@ -92,6 +92,7 @@ pub enum Expr {
     Type(Rc<str>),
     Var(Rc<str>),
     Slot { var: Rc<str>, index: usize },
+    IsNil(Rc<str>),
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
@@ -325,6 +326,10 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let index = expect_index(input)?;
         Ok(Expr::Slot { var, index })
     }
+    else if input.check(|x| x.eq(&Token::IsNil))? {
+        let var = expect_sym(input)?;
+        Ok(Expr::IsNil(var))
+    }
     else {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
@@ -500,6 +505,7 @@ mod test {
                 set q : Coroutine = dyn_coroutine name (x, y, z);
                 set r : Int = length i;
                 set s : Symbol = ~Sym;
+                set n : Bool = is_nil s;
                 return x;
             } 
        "#; 

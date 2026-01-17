@@ -498,6 +498,15 @@ impl Vm {
                     }
                 }
 
+                Op::IsNil(local) => {
+                    let result = match self.get_local(local)? {
+                        RuntimeData::Nil => true,
+                        _ => false,
+                    };
+                    ret = Some(RuntimeData::Bool(result));
+                    self.current.ip += 1;
+                },
+
                 Op::Nop => { self.current.ip += 1; },
             }
         }

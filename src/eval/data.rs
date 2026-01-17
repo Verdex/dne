@@ -68,6 +68,7 @@ pub enum Op {
     And(usize, usize),
     Or(usize, usize),
     Xor(usize, usize),
+    IsNil(usize),
 }
 
 #[derive(Debug)]

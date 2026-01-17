@@ -499,8 +499,6 @@ impl Vm {
                 }
 
                 Op::Nop => { self.current.ip += 1; },
-
-                _ => todo!(),
             }
         }
     }

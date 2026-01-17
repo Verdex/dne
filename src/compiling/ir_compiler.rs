@@ -250,6 +250,13 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             Ok(vec![LOp::Op(Op::DynCoroutine { local: closure, params }),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
+        Stmt::Set { var: dest, val: Expr::Resume(local), .. } => {
+            let coroutine = access(l_map, &local, &proc.name, &Type::Coroutine)?;
+            let dest = any_access(l_map, &dest, &proc.name)?;
+
+            Ok(vec![LOp::Op(Op::Resume(coroutine)),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
         Stmt::SlotInsert { var, input, index } => {
             let src = any_access(l_map, &input, &proc.name)?;
             let dest = access(l_map, &var, &proc.name, &Type::Ref)?;

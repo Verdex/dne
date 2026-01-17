@@ -273,16 +273,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Yield(local) => s(Op::Yield(access(l_map, local, &proc.name, &proc.return_type)?)),
         _ => todo!(),
     }
-    // TODO
-    /*
-    Set { var: Rc<str>, ttype : Type, val: Expr },
-    */
-
-    // TODO
-    /*
-
-    Resume(Rc<str>),
-    */
 }
 
 fn primitive_ops() -> (Vec<PProc>, Vec<Proc>) {

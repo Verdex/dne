@@ -226,6 +226,30 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             Ok(vec![LOp::Op(Op::GetType(src)),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
+        Stmt::Set { var: dest, val: Expr::Coroutine { name, params }, .. } => {
+            let (callee_proc, callee_index) = c(proc_map, &proc.name, name)?;
+            let dest = access(l_map, &dest, &proc.name, &Type::Coroutine)?;
+
+            if params.len() != callee_proc.params.len() {
+                return Err(CompileError::ProcCallArityMismatch { caller_proc: Rc::clone(&proc.name), callee_proc: Rc::clone(&callee_proc.name) });
+            }
+
+            let local_indices = params.iter().zip(callee_proc.params.iter())
+                         .map(|(local, (_, ttype))| access(l_map, local, &proc.name, ttype))
+                         .collect::<Result<Vec<_>, CompileError>>()?;
+
+            Ok(vec![LOp::Op(Op::Coroutine { proc_id: *callee_index, params: local_indices }),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
+        Stmt::Set { var: dest, val: Expr::DynCoroutine { name, params }, .. } => {
+            let closure = access(l_map, &name, &proc.name, &Type::Closure)?;
+            let dest = access(l_map, &dest, &proc.name, &Type::Coroutine)?;
+
+            let params = params.iter().map(|p| any_access(l_map, p, &proc.name)).collect::<Result<Vec<_>, CompileError>>()?;
+
+            Ok(vec![LOp::Op(Op::DynCoroutine { local: closure, params }),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
         Stmt::SlotInsert { var, input, index } => {
             let src = any_access(l_map, &input, &proc.name)?;
             let dest = access(l_map, &var, &proc.name, &Type::Ref)?;
@@ -250,8 +274,6 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
     // TODO
     /*
 
-    Coroutine { name : Rc<str>, params : Vec<Rc<str>> },
-    DynCoroutine { name : Rc<str>, params : Vec<Rc<str>> },
     Resume(Rc<str>),
     */
 }

@@ -19,7 +19,7 @@ pub enum CompileError {
     ReuseParamName { proc: Rc<str>, param_name: Rc<str> },
 }
 
-// TODO define error for CompileName
+// TODO define error trait stuff for CompileError
 
 pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
     let (op_sigs, mut op_code) = primitive_ops();

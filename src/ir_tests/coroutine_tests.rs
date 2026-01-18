@@ -5,8 +5,6 @@ use crate::eval::error::VmError;
 
 use super::util::{ test, test_fails };
 
-// TODO need nil predicate check
-
 
 #[test]
 fn should_detect_nil() {
@@ -52,8 +50,8 @@ fn should_yield_twice() {
 proc target() -> Int {
     set x : Int = 7;
     set y : Int = 8;
-    yield x;
     yield y;
+    yield x;
     break;
 }
 proc main() -> Int {

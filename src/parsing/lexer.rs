@@ -70,7 +70,7 @@ pub mod ir {
         loop {
             // TODO string
             match input.peek() {
-                Some((_, '/')) if comment => { take_until(&mut input, |x| x != '\n' && x != '\r'); comment = false;  }, 
+                Some((_, '/')) if comment => { take_while(&mut input, |x| x != '\n' && x != '\r'); comment = false;  }, 
                 Some((_, '*')) if comment => { input.next().unwrap(); block_comment(&mut input, max)?; comment = false; },
                 Some((_, '/')) => { input.next().unwrap(); comment = true; },
                 // Note:  Incomplete comment
@@ -117,14 +117,14 @@ pub mod ir {
 
     fn cons_type(input : &mut Input) -> Result<(Token, usize), usize> {
         input.next().unwrap();
-        let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
+        let s = take_while(input, |c| c.is_alphanumeric() || c == '_');
         let s = s.into_iter().collect::<String>();
         let l = s.len() - 1;
         Ok((Token::ConsType(s.into()), l))
     }
 
     fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {
-        let s = take_until(input, |c| c.is_alphanumeric() || c == '_');
+        let s = take_while(input, |c| c.is_alphanumeric() || c == '_');
         let s = s.into_iter().collect::<String>();
         let l = s.len() - 1;
 
@@ -180,7 +180,7 @@ fn number_or_arrow(input : &mut Input) -> Result<(Num, usize), usize> {
         }
     }
 
-    let s = take_until(input, |c| c.is_numeric() || c == '.' || c == '-' || c == 'E' || c == 'e' || c == '+');
+    let s = take_while(input, |c| c.is_numeric() || c == '.' || c == '-' || c == 'E' || c == 'e' || c == '+');
     let mut s = s.into_iter().collect::<String>();
 
     if c == '-' {
@@ -218,7 +218,7 @@ fn block_comment(input : &mut Input, max : usize) -> Result<(), usize> {
 }
 
 // Note:  Only call this function when you know the first char is what you want
-fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<char> {
+fn take_while<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<char> {
     let mut ret = vec![input.next().unwrap().1];
 
     loop {

@@ -65,13 +65,13 @@ pub mod ir {
         let max = input.len();
         let mut input = input.char_indices().peekable();
         let mut ret : Vec<(Token, usize, usize)> = vec![];
- 
+        let mut comment = false;
+
         loop {
             // TODO string
-
-            let mut comment = false;
             match input.peek() {
-                Some((_, '/')) if comment => { take_until(&mut input, |x| x == '\n' || x == '\r');  }, 
+                Some((_, '/')) if comment => { take_until(&mut input, |x| x != '\n' && x != '\r'); comment = false;  }, 
+                Some((_, '*')) if comment => { input.next().unwrap(); block_comment(&mut input, max)?; comment = false; },
                 Some((_, '/')) => { input.next().unwrap(); comment = true; },
                 // Note:  Incomplete comment
                 Some((i, _)) if comment => { return Err(*i); },
@@ -198,6 +198,25 @@ fn number_or_arrow(input : &mut Input) -> Result<(Num, usize), usize> {
     }
 }
 
+fn block_comment(input : &mut Input, max : usize) -> Result<(), usize> {
+    let mut nest = 1;
+    let mut start = false;
+    let mut end = false;
+    loop {
+        if nest == 0 {
+            return Ok(());
+        }
+        match input.next() {
+            None => { return Err(max); },
+            Some((_, '*')) if start => { nest += 1; start = false; },
+            Some((_, '*')) => { end = true; },
+            Some((_, '/')) if end => { nest -= 1; end = false; },
+            Some((_, '/')) => { start = true; },
+            _ => { },
+        }
+    }
+}
+
 // Note:  Only call this function when you know the first char is what you want
 fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<char> {
     let mut ret = vec![input.next().unwrap().1];
@@ -218,6 +237,27 @@ fn take_until<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<cha
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn should_comment() {
+        let input = r"
+
+        // 123
+
+        /**/
+        /* */
+
+        /*
+        123 
+        /* /* 123 */  */
+
+        */
+
+        ";
+        let output = ir::lex(input).unwrap();
+        println!("{:?}", output);
+        assert_eq!(output.len(), 0);
+    }
 
     #[test]
     fn should_lex_punct() {

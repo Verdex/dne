@@ -103,8 +103,67 @@ proc main() -> Int {
     assert_eq!(output, 28);
 }
 
-// TODO coroutine with coroutine inside of it
-// coroutine as parameter
-// coroutine as return value
-// coroutine with inputs
-// coroutine with different functions
+#[test]
+fn should_handle_coroutine_as_param() {
+    let input = r"
+proc target_inner() -> Int {
+    set x : Int = 1;
+    set y : Int = 2;
+    yield x;
+    yield y;
+    break;
+}
+proc target(c : Coroutine) -> Int {
+    set x : Int = 3;
+    set y : Int = 5;
+    yield x;
+    set z : Int = resume c;
+    yield z;
+    yield y;
+    break;
+}
+proc main() -> Int {
+    set co1 : Coroutine = coroutine target_inner();
+    set trash : Int = resume co1;
+    set co2 : Coroutine = coroutine target(co1);
+
+    set a : Int = resume co2;
+    set b : Int = resume co2;
+    set c : Int = resume co2;
+
+    set ret : Int = call mul_int(a, b); 
+    set ret : Int = call sub_int(ret, c);
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 1);
+}
+
+#[test]
+fn should_handle_coroutine_as_return() {
+    let input = r"
+proc target(x : Int, y : Int) -> Int {
+    yield x;
+    yield y;
+    break;
+}
+proc p() -> Coroutine {
+    set a : Int = 10;
+    set b : Int = 20;
+    set c : Coroutine = coroutine target(a, b);
+    set trash : Int = resume c; 
+    return c;
+}
+proc main() -> Int {
+    set c : Coroutine = call p();
+    set ret : Int = resume c;
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 20);
+}

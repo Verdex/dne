@@ -174,3 +174,41 @@ proc main() -> Int {
     let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
     assert_eq!(output, 20);
 }
+
+#[test]
+fn should_handle_dyn_coroutine_with_env_closure() {
+    let input = r"
+proc target(x : Int, y : Int, z : Int, w : Int) -> Int {
+    yield x;
+    yield y;
+    yield z;
+    yield w;
+    break;
+}
+proc main() -> Int {
+    set a : Int = 1;
+    set b : Int = 2;
+    set c : Int = 3;
+    set d : Int = 4;
+    set target : Closure = closure target(a, b);
+    set co : Coroutine = dyn_coroutine target(c, d);
+    
+    set r1 : Int = resume co;
+    set r2 : Int = resume co;
+    set r3 : Int = resume co;
+    set r4 : Int = resume co;
+
+    set ret : Int = call add_int(r1, r2);
+    set ret : Int = call add_int(ret, r3);
+    set ret : Int = call add_int(ret, r4);
+
+    return ret;
+}
+"; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::Int(x), x);
+    assert_eq!(output, 10);
+}
+
+
+

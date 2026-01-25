@@ -1,9 +1,8 @@
 
 use crate::util::proj;
 use crate::eval::data::RuntimeData;
-use crate::eval::error::VmError;
 
-use super::util::{ test, test_fails };
+use super::util::test;
 
 #[test]
 fn should_closure_and_dyn_call() {

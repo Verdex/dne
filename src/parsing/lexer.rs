@@ -62,13 +62,21 @@ pub mod ir {
             ($input:ident, $ret:ident, $i:ident, $t:expr) => { { let i = *$i; $input.next().unwrap(); $ret.push(($t, i, i)); } }
         }
 
+        let max = input.len();
         let mut input = input.char_indices().peekable();
         let mut ret : Vec<(Token, usize, usize)> = vec![];
  
         loop {
             // TODO string
-            // TODO comment
+
+            let mut comment = false;
             match input.peek() {
+                Some((_, '/')) if comment => { take_until(&mut input, |x| x == '\n' || x == '\r');  }, 
+                Some((_, '/')) => { input.next().unwrap(); comment = true; },
+                // Note:  Incomplete comment
+                Some((i, _)) if comment => { return Err(*i); },
+                None if comment => { return Err(max); },
+
                 None => { return Ok(ret); },
                 Some((_, c)) if c.is_whitespace() => {
                     whitespace(&mut input)?;

@@ -2,7 +2,7 @@
 use std::rc::Rc;
 use std::collections::{ HashSet, HashMap };
 
-use crate::parsing::ir_parser::{Lit, Expr, Type, Stmt, Top, Proc as PProc, Global};
+use crate::parsing::ir_parser::{Lit, Expr, Type, Stmt, Proc as PProc};
 use crate::eval::data::*;
 
 type ProcMap<'a> = HashMap<Rc<str>, (&'a PProc, usize)>;
@@ -21,24 +21,10 @@ pub enum CompileError {
 
 // TODO define error trait stuff for CompileError
 
-pub fn compile(ir : &[Top]) -> Result<Vec<Proc>, CompileError> {
+pub fn compile(procs : &[PProc]) -> Result<Vec<Proc>, CompileError> {
     let (op_sigs, mut op_code) = primitive_ops();
 
-    let (procs, globals, proc_map) = {
-        let mut ps : Vec<&PProc> = vec![];
-        let mut gs = vec![];
-        for t in ir {
-            match t {
-                Top::Global(x) => { gs.push(x); },
-                Top::Proc(x) => { ps.push(x); },
-            }
-        }
-        let pm = HashMap::from_iter(op_sigs.iter().chain(ps.iter().map(|x| *x)).enumerate().map(|(v, k)| (Rc::clone(&k.name), (k, v))));
-        (ps, gs, pm)
-    };
-
-    // TODO handle globals (drop them all in an init proc?)
-
+    let proc_map = HashMap::from_iter(op_sigs.iter().chain(procs.iter()).enumerate().map(|(v, k)| (Rc::clone(&k.name), (k, v))));
     let mut compiled = procs.into_iter().map(|x| compile_proc(x, &proc_map)).collect::<Result<Vec<_>, _>>()?;
     
     op_code.append(&mut compiled);

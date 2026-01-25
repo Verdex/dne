@@ -23,19 +23,6 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError { }
 
 #[derive(Debug)]
-pub enum Top {
-    Global(Global),
-    Proc(Proc),
-}
-
-#[derive(Debug)]
-pub struct Global {
-    pub name: Rc<str>, 
-    pub ttype: Type,
-    pub value: Lit,
-}
-
-#[derive(Debug)]
 pub struct Proc {
     pub name: Rc<str>, 
     pub params: Vec<(Rc<str>, Type)>, 
@@ -95,30 +82,21 @@ pub enum Expr {
     IsNil(Rc<str>),
 }
 
-pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
+pub fn parse(input : &str) -> Result<Vec<Proc>, ParseError> {
     let input = match ir::lex(input) {
         Err(i) => { return Err(ParseError::Lex(i)); },
         Ok(ls) => ls,
     };
     let mut input = Input::new(input, ParseError::Eof, |s, e| ParseError::Fatal(s, e));
 
-    parse_tops(&mut input)
+    parse_procs(&mut input)
 }
 
-fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
+fn parse_procs(input : &mut Input) -> Result<Vec<Proc>, ParseError> {
     let mut ret = vec![];
     while !input.empty() {
         if input.check(|x| x.eq(&Token::Proc))? {
             ret.push(parse_proc(input)?);
-        }
-        else if input.check(|x| x.eq(&Token::Global))? {
-            let name = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::Colon))?;
-            let ttype = parse_type(input)?;
-            input.expect(|x| x.eq(&Token::Equal))?;
-            let value = parse_lit(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Top::Global(Global{ name, ttype, value }));
         }
         else {
             let (s, e) = input.current()?;
@@ -128,7 +106,7 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
     Ok(ret)
 }
 
-fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
+fn parse_proc(input : &mut Input) -> Result<Proc, ParseError> {
     let name = expect_sym(input)?;
     input.expect(|x| x.eq(&Token::LParen))?;
     let mut params = vec![];
@@ -156,7 +134,7 @@ fn parse_proc(input : &mut Input) -> Result<Top, ParseError> {
     input.expect(|x| x.eq(&Token::LCurl))?;
     let body = parse_stmts(input)?;
     input.expect(|x| x.eq(&Token::RCurl))?;
-    Ok( Top::Proc(Proc{ name, params, return_type, body }))
+    Ok( Proc{ name, params, return_type, body })
 }
 
 fn parse_stmts(input : &mut Input) -> Result<Vec<Stmt>, ParseError> {
@@ -412,23 +390,6 @@ mod test {
     use super::*;
 
     #[test]
-    fn should_parse_globals() {
-       let input = r#"
-            global g_1 : Int = 0;
-            global g_2 : Bool = true;
-            global g_3 : Float = 0.1;
-            global g_4 : Float = -0.1;
-            global g_5 : Float = -0.1E-10;
-            global g_5 : Float = -0.1E+10;
-            global g_6 : Int = -1;
-            global g_7 : Symbol = ~Symbol;
-       "#; 
-
-        let output = parse(input).unwrap();
-        assert_eq!(output.len(), 8);
-    }
-
-    #[test]
     fn should_parse_empty_params_proc() {
         let input = r#"
             proc name() -> Int { set x : Int = 0; return x; } 
@@ -514,7 +475,7 @@ mod test {
         assert_eq!(output.len(), 1);
     }
 
-    fn d(input : &str, x : Result<Vec<Top>, ParseError>) {
+    fn d(input : &str, x : Result<Vec<Proc>, ParseError>) {
         match x {
             Err(ParseError::Fatal(s, e)) => {
                 let w = crate::util::underline(input, s, e);

@@ -96,6 +96,11 @@ pub mod ir {
                     let (t, l) = cons_type(&mut input)?;
                     ret.push((t, s, s + l));
                 },
+                Some((s, '"')) => {
+                    let s = *s;
+                    let (t, e) = string(&mut input, max)?;
+                    ret.push((Token::String(t), s, e));
+                },
                 Some((i, '(')) => punct!(input, ret, i, Token::LParen),
                 Some((i, ')')) => punct!(input, ret, i, Token::RParen), 
                 Some((i, '{')) => punct!(input, ret, i, Token::LCurl), 
@@ -228,11 +233,11 @@ fn take_while<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<cha
     }
 }
 
-// Note:  Assumes '"' has already been consumed
-fn string(input : &mut Input, max : usize) -> Result<Rc<str>, usize> {
+fn string(input : &mut Input, max : usize) -> Result<(Rc<str>, usize), usize> {
+    input.next().unwrap();
     let mut xs = vec![];
     let mut escape = false;
-    loop {
+    let last = loop {
         let item = input.next();
         if let None = item {
             return Err(max);
@@ -267,20 +272,25 @@ fn string(input : &mut Input, max : usize) -> Result<Rc<str>, usize> {
                 escape = true;
             },
             (_, true) => { return Err(index); },
-            ('"', false) => { break; },
+            ('"', false) => { break index; },
             (c, false) => {
                 xs.push(c);
             },
         }
-    }
+    };
 
-    Ok(xs.into_iter().collect::<String>().into())
+    Ok((xs.into_iter().collect::<String>().into(), last))
 }
 
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn should_lex_string() {
+
+    }
 
     #[test]
     fn should_comment() {

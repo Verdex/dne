@@ -192,6 +192,7 @@ fn number_or_arrow(input : &mut Input) -> Result<(Num, usize), usize> {
     }
 }
 
+// Note:  Assumes /* has already been consumed
 fn block_comment(input : &mut Input, max : usize) -> Result<(), usize> {
     let mut nest = 1;
     let mut start = false;

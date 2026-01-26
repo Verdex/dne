@@ -10,12 +10,6 @@ pub mod ir {
     use super::*;
 
     #[derive(Debug, PartialEq)]
-    pub struct StringSegment {
-        s : Rc<str>,
-        var : Option<Rc<str>>,
-    }
-
-    #[derive(Debug, PartialEq)]
     pub enum Token {
         LParen,
         RParen,
@@ -31,7 +25,7 @@ pub mod ir {
         Bool(bool),
         Symbol(Rc<str>),
         ConsType(Rc<str>),
-        String(Vec<StringSegment>),
+        String(Rc<str>),
         Type,
         Slot,
         SlotSet,

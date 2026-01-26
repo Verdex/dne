@@ -62,7 +62,7 @@ pub enum Lit {
     Float(f64),
     Bool(bool),
     ConsType(Rc<str>),
-    // TODO string
+    String(Rc<str>),
 }
 
 #[derive(Debug)]
@@ -227,6 +227,11 @@ fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
         let x = Rc::clone(x);
         input.take()?;
         Ok(Lit::ConsType(x))
+    }
+    else if let Token::String(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Lit::String(x))
     }
     else {
         let (s, e) = input.current()?;

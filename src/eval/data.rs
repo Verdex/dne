@@ -22,11 +22,11 @@ pub enum RuntimeData {
     Int(i64),
     Float(f64),
     Symbol(Rc<str>),
+    String(Rc<str>),
     Ref(usize),
     Closure(Closure),
     Coroutine(Coroutine),
     Nil,
-    // TODO string
 }
 
 #[derive(Debug)]

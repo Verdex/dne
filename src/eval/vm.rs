@@ -237,6 +237,7 @@ impl Vm {
                         (RuntimeData::Int(a), RuntimeData::Int(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
                         (RuntimeData::Bool(a), RuntimeData::Bool(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
                         (RuntimeData::Symbol(a), RuntimeData::Symbol(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
+                        (RuntimeData::String(a), RuntimeData::String(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
                         (RuntimeData::Nil, RuntimeData::Nil) => { ret = Some( RuntimeData::Bool(true) ); },
                         (RuntimeData::Ref(a), RuntimeData::Ref(b)) => { ret = Some( RuntimeData::Bool(a == b) ); },
 
@@ -247,6 +248,7 @@ impl Vm {
                         (RuntimeData::Int(_), _) => { return self.local_unexpected_type(b, "int"); },
                         (RuntimeData::Bool(_), _) => { return self.local_unexpected_type(b, "bool"); },
                         (RuntimeData::Symbol(_), _) => { return self.local_unexpected_type(b, "symbol"); },
+                        (RuntimeData::String(_), _) => { return self.local_unexpected_type(b, "string"); },
                         (RuntimeData::Nil, _) => { return self.local_unexpected_type(b, "nil"); },
                         (RuntimeData::Ref(_), _) => { return self.local_unexpected_type(b, "ref"); }, 
                         (RuntimeData::Closure { .. }, _) => { return self.local_unexpected_type(b, "closure"); },

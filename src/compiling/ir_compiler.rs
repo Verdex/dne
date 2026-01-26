@@ -134,6 +134,7 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
         Stmt::Set { var, val: Expr::Lit(Lit::Float(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Float)?, RuntimeData::Float(*x))),
         Stmt::Set { var, val: Expr::Lit(Lit::Bool(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Bool)?, RuntimeData::Bool(*x))),
         Stmt::Set { var, val: Expr::Lit(Lit::ConsType(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::Symbol)?, RuntimeData::Symbol(Rc::clone(x)))),
+        Stmt::Set { var, val: Expr::Lit(Lit::String(x)), .. } => s(Op::SetLocalData(access(l_map, &var, &proc.name, &Type::String)?, RuntimeData::String(Rc::clone(x)))),
         Stmt::Set { var, val: Expr::Cons { name, params }, .. } => { 
             let target = access(l_map, &var, &proc.name, &Type::Ref)?;
             let sym_var = access(l_map, &name, &proc.name, &Type::Symbol)?;

@@ -49,6 +49,8 @@ pub mod ir {
         Cons,
         Delete,
         IsNil,
+        ToString,
+        Concat,
     }
 
     pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {
@@ -152,6 +154,8 @@ pub mod ir {
             "cons" => Token::Cons,
             "delete" => Token::Delete,
             "is_nil" => Token::IsNil,
+            "to_string" => Token::ToString,
+            "concat" => Token::Concat,
             s => Token::Symbol(s.into()),
         };
 

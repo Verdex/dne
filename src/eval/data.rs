@@ -67,6 +67,8 @@ pub enum Op {
     Or(usize, usize),
     Xor(usize, usize),
     IsNil(usize),
+    ToString(usize),
+    Concat(usize, usize),
 }
 
 #[derive(Debug)]

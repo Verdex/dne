@@ -51,6 +51,17 @@ macro_rules! proj_type {
             Ok(proj!($self.current.locals[$local], RuntimeData::Closure(ref x), x))
         }
     }};
+    ($self:expr, $local:expr, string) => {{
+        if $local >= $self.current.locals.len() {
+           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
+        }
+        else if !matches!( $self.current.locals[$local], RuntimeData::String(_) ) {
+            $self.local_unexpected_type($local, "string")
+        }
+        else {
+            Ok(proj!($self.current.locals[$local], RuntimeData::String(ref x), Rc::clone(x)))
+        }
+    }};
     ($self:expr, $local:expr, coroutine) => {{ // TODO make sure this is actually being used
         if $local >= $self.current.locals.len() {
            Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
@@ -506,6 +517,29 @@ impl Vm {
                         _ => false,
                     };
                     ret = Some(RuntimeData::Bool(result));
+                    self.current.ip += 1;
+                },
+
+                Op::ToString(local) => {
+                    let result : Rc<str> = match self.get_local(local)? {
+                        RuntimeData::Bool(x) => format!("{}", x).into(),
+                        RuntimeData::Int(x) => format!("{}", x).into(),
+                        RuntimeData::Float(x) => format!("{}", x).into(),
+                        RuntimeData::Symbol(x) => Rc::clone(x),
+                        RuntimeData::String(x) => Rc::clone(x),
+                        RuntimeData::Ref(addr) => format!("ref({addr})").into(),
+                        RuntimeData::Closure(x) => "closure".into(),
+                        RuntimeData::Coroutine(x) => "coroutine".into(),
+                        RuntimeData::Nil => "nil".into(),
+                    };
+                    ret = Some(RuntimeData::String(result));
+                    self.current.ip += 1;
+                },
+
+                Op::Concat(a, b) => {
+                    let a = proj_type!(self, a, string)?;
+                    let b = proj_type!(self, b, string)?;
+                    ret = Some(RuntimeData::String(format!("{}{}", a, b).into()));
                     self.current.ip += 1;
                 },
 

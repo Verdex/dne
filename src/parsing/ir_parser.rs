@@ -80,6 +80,8 @@ pub enum Expr {
     Var(Rc<str>),
     Slot { var: Rc<str>, index: usize },
     IsNil(Rc<str>),
+    ToString(Rc<str>),
+    Concat(Rc<str>, Rc<str>),
 }
 
 pub fn parse(input : &str) -> Result<Vec<Proc>, ParseError> {
@@ -286,6 +288,15 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let var = expect_sym(input)?;
         Ok(Expr::IsNil(var))
     }
+    else if input.check(|x| x.eq(&Token::ToString))? {
+        let var = expect_sym(input)?;
+        Ok(Expr::ToString(var))
+    }
+    else if input.check(|x| x.eq(&Token::Concat))? {
+        let var1 = expect_sym(input)?;
+        let var2 = expect_sym(input)?;
+        Ok(Expr::Concat(var1, var2))
+    }
     else {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
@@ -445,6 +456,9 @@ mod test {
                 set r : Int = length i;
                 set s : Symbol = ~Sym;
                 set n : Bool = is_nil s;
+                set g0 : String = " ";
+                set g1 : String = to_string x;
+                set g2 : String = concat g0 g1;
                 return x;
             } 
        "#; 

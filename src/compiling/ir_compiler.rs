@@ -251,6 +251,21 @@ fn compile_stmt(proc: &PProc, stmt : &Stmt, proc_map : &ProcMap, l_map : &mut LM
             Ok(vec![LOp::Op(Op::IsNil(local)),
                     LOp::Op(Op::SetLocalReturn(dest))])
         },
+        Stmt::Set { var: dest, val: Expr::ToString(local), .. } => {
+            let local = any_access(l_map, &local, &proc.name)?;
+            let dest = access(l_map, &dest, &proc.name, &Type::String)?;
+
+            Ok(vec![LOp::Op(Op::ToString(local)),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
+        Stmt::Set { var: dest, val: Expr::Concat(local1, local2), .. } => {
+            let local1 = access(l_map, &local1, &proc.name, &Type::String)?;
+            let local2 = access(l_map, &local2, &proc.name, &Type::String)?;
+            let dest = access(l_map, &dest, &proc.name, &Type::String)?;
+
+            Ok(vec![LOp::Op(Op::Concat(local1, local2)),
+                    LOp::Op(Op::SetLocalReturn(dest))])
+        },
         Stmt::SlotInsert { var, input, index } => {
             let src = any_access(l_map, &input, &proc.name)?;
             let dest = access(l_map, &var, &proc.name, &Type::Ref)?;

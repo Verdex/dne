@@ -285,11 +285,15 @@ fn string(input : &mut Input, max : usize) -> Result<(Rc<str>, usize), usize> {
 
 #[cfg(test)]
 mod test {
+    use super::ir::Token;
     use super::*;
+    use crate::util::proj;
 
     #[test]
     fn should_lex_string() {
-
+        let input = " \" \\\" \\0 \\t \\r \\n \\\\ a string\" ";
+        let output = ir::lex(input).unwrap();
+        assert_eq!(*proj!(&output[..], [(Token::String(s), _, _)], s), " \" \0 \t \r \n \\ a string".into());
     }
 
     #[test]
@@ -309,7 +313,6 @@ mod test {
 
         ";
         let output = ir::lex(input).unwrap();
-        println!("{:?}", output);
         assert_eq!(output.len(), 0);
     }
 

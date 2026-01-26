@@ -31,8 +31,6 @@ pub enum RuntimeData {
 
 #[derive(Debug)]
 pub enum Op {
-    // TODO set global
-    // TODO set local global
     Call(usize, Vec<usize>),
     DynCall(usize, Vec<usize>),
     Resume(usize),

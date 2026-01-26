@@ -228,6 +228,55 @@ fn take_while<F : FnMut(char) -> bool>(input : &mut Input, mut p : F) -> Vec<cha
     }
 }
 
+// Note:  Assumes '"' has already been consumed
+fn string(input : &mut Input, max : usize) -> Result<Rc<str>, usize> {
+    let mut xs = vec![];
+    let mut escape = false;
+    loop {
+        let item = input.next();
+        if let None = item {
+            return Err(max);
+        }
+        let (index, item) = item.unwrap();
+        match (item, escape) {
+            ('"', true) => {
+                xs.push('"');
+                escape = false;
+            },
+            ('0', true) => {
+                xs.push('\0');
+                escape = false;
+            },
+            ('t', true) => {
+                xs.push('\t');
+                escape = false;
+            },
+            ('r', true) => {
+                xs.push('\r');
+                escape = false;
+            },
+            ('n', true) => {
+                xs.push('\n');
+                escape = false;
+            },
+            ('\\', true) => {
+                xs.push('\\');
+                escape = false;
+            },
+            ('\\', false) => {
+                escape = true;
+            },
+            (_, true) => { return Err(index); },
+            ('"', false) => { break; },
+            (c, false) => {
+                xs.push(c);
+            },
+        }
+    }
+
+    Ok(xs.into_iter().collect::<String>().into())
+}
+
 
 #[cfg(test)]
 mod test {
@@ -261,3 +310,4 @@ mod test {
         assert_eq!(output.len(), 8);
     }
 }
+

@@ -207,38 +207,6 @@ fn parse_set(input : &mut Input) -> Result<Stmt, ParseError> {
     Ok(Stmt::Set { var, val, ttype })
 }
 
-fn parse_lit(input : &mut Input) -> Result<Lit, ParseError> {
-    if let Token::Int(x) = input.peek()? {
-        let x = *x;
-        input.take()?;
-        Ok(Lit::Int(x))
-    }
-    else if let Token::Float(x) = input.peek()? {
-        let x = *x;
-        input.take()?;
-        Ok(Lit::Float(x))
-    }
-    else if let Token::Bool(x) = input.peek()? {
-        let x = *x;
-        input.take()?;
-        Ok(Lit::Bool(x))
-    }
-    else if let Token::ConsType(x) = input.peek()? {
-        let x = Rc::clone(x);
-        input.take()?;
-        Ok(Lit::ConsType(x))
-    }
-    else if let Token::String(x) = input.peek()? {
-        let x = Rc::clone(x);
-        input.take()?;
-        Ok(Lit::String(x))
-    }
-    else {
-        let (s, e) = input.current()?;
-        Err(ParseError::Fatal(s, e))
-    }
-}
-
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
     if let Token::Int(x) = input.peek()? {
         let x = *x;
@@ -264,6 +232,11 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let x = Rc::clone(x);
         input.take()?;
         Ok(Expr::Var(x))
+    }
+    else if let Token::String(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Expr::Lit(Lit::String(x)))
     }
     else if input.check(|x| x.eq(&Token::Call))? {
         let name = expect_sym(input)?;
@@ -475,6 +448,17 @@ mod test {
                 return x;
             } 
        "#; 
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_string() {
+        let input = r#"proc name() -> String {
+            set x : String = "blarg";
+            return x;
+        }"#;
 
         let output = parse(input).unwrap();
         assert_eq!(output.len(), 1);

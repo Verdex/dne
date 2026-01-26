@@ -55,3 +55,17 @@ proc main() -> Float {
     let output = proj!(test(input).unwrap(), RuntimeData::Float(x), x);
     assert_eq!(output, 18.01E-5);
 }
+
+#[test]
+fn should_return_string() {
+    let input = r#"
+proc main() -> String {
+    set x : String = "this is a string";
+    return x;
+}
+"#; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::String(x), x);
+    assert_eq!(output, "this is a string".into());
+}
+

@@ -361,3 +361,48 @@ proc main() -> Float {
     assert_eq!(output, 5.0);
 }
 
+#[test]
+fn should_to_string_and_concat() {
+    let input = r#"
+proc cl() -> Int { 
+    set x : Int = 0;
+    return x;
+}
+proc co() -> Int {
+    break;
+}
+proc main() -> String {
+    set i : Int = 1;
+    set f : Float = 2.2;
+    set b : Bool = true;
+    set sym : Symbol = ~sym;
+    set str : String = "str";
+    set co : Coroutine = coroutine co();
+    set cl : Closure = closure cl();
+    set n : Int = resume co;
+    set r : Ref = cons sym (i, f);
+    set temp : String = to_string i;
+    set ret : String = to_string f;
+    set ret : String = concat temp ret;
+    set temp : String = to_string b;
+    set ret : String = concat ret temp;
+    set temp : String = to_string sym;
+    set ret : String = concat ret temp;
+    set temp : String = to_string str;
+    set ret : String = concat ret temp;
+    set temp : String = to_string co;
+    set ret : String = concat ret temp;
+    set temp : String = to_string cl;
+    set ret : String = concat ret temp;
+    set temp : String = to_string n;
+    set ret : String = concat ret temp;
+    set temp : String = to_string r;
+    set ret : String = concat ret temp;
+    return ret;
+}
+"#; 
+
+    let output = proj!(test(input).unwrap(), RuntimeData::String(x), x);
+    assert_eq!(output, "12.2truesymstrcoroutineclosurenilref(0)".into());
+}
+

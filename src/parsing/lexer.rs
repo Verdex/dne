@@ -62,7 +62,6 @@ pub mod ir {
         let mut comment = false;
 
         loop {
-            // TODO string
             match input.peek() {
                 Some((_, '/')) if comment => { take_while(&mut input, |x| x != '\n' && x != '\r'); comment = false;  }, 
                 Some((_, '*')) if comment => { input.next().unwrap(); block_comment(&mut input, max)?; comment = false; },

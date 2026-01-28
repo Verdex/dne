@@ -528,8 +528,8 @@ impl Vm {
                         RuntimeData::Symbol(x) => Rc::clone(x),
                         RuntimeData::String(x) => Rc::clone(x),
                         RuntimeData::Ref(addr) => format!("ref({addr})").into(),
-                        RuntimeData::Closure(x) => "closure".into(),
-                        RuntimeData::Coroutine(x) => "coroutine".into(),
+                        RuntimeData::Closure(_) => "closure".into(),
+                        RuntimeData::Coroutine(_) => "coroutine".into(),
                         RuntimeData::Nil => "nil".into(),
                     };
                     ret = Some(RuntimeData::String(result));

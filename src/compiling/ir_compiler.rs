@@ -19,7 +19,27 @@ pub enum CompileError {
     ReuseParamName { proc: Rc<str>, param_name: Rc<str> },
 }
 
-// TODO define error trait stuff for CompileError
+impl std::fmt::Display for CompileError {
+    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self { 
+            CompileError::AccessMissingLocal { proc, local } => 
+                write!(f, "Access missing local {local} in proc {proc}"),
+            CompileError::AccessMissingProc { caller_proc, callee_proc } =>
+                write!(f, "Access missing proc {callee_proc} in proc {caller_proc}"),
+            CompileError::AccessMissingLabel { proc, label } => 
+                write!(f, "Access missing label {label} in proc {proc}"),
+            CompileError::ProcCallArityMismatch { caller_proc, callee_proc } => 
+                write!(f, "Proc arity mismatch for call {callee_proc} in {caller_proc}"),
+            CompileError::TypeMismatch { proc, expected, found } => 
+                write!(f, "Type mismatch in proc {proc}:  Expected {expected}, but found {found}"),
+            CompileError::ReuseParamName { proc, param_name } =>
+                write!(f, "Reuse param name {param_name} in proc {proc}"),
+        }
+    }
+}
+
+impl std::error::Error for CompileError { }
+
 
 pub fn compile(procs : &[PProc]) -> Result<Vec<Proc>, CompileError> {
     let (op_sigs, mut op_code) = primitive_ops();

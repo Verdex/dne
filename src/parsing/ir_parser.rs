@@ -13,9 +13,10 @@ pub enum ParseError {
 
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
-        // TODO 
         match self { 
-            _ => write!(f, ""),
+            ParseError::Lex(x) => write!(f, "encountered unexpected lexing error at: {x}"),
+            ParseError::Fatal(x, y) => write!(f, "encountered unexpected fatal parsing error at: {x}-{y}"),
+            ParseError::Eof => write!(f, "encountered unexpected EOF"),
         }
     }
 }

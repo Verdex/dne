@@ -62,17 +62,6 @@ macro_rules! proj_type {
             Ok(proj!($self.current.locals[$local], RuntimeData::String(ref x), Rc::clone(x)))
         }
     }};
-    ($self:expr, $local:expr, coroutine) => {{ // TODO make sure this is actually being used
-        if $local >= $self.current.locals.len() {
-           Err(VmError::AccessMissingLocal($local, $self.stack_trace()))
-        }
-        else if !matches!( $self.current.locals[$local], RuntimeData::Coroutine(_) ) {
-            $self.local_unexpected_type($local, "coroutine")
-        }
-        else {
-            Ok(proj!($self.current.locals[$local], RuntimeData::Coroutine(ref x), x))
-        }
-    }};
 }
 
 #[derive(Debug)]

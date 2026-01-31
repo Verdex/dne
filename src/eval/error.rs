@@ -5,7 +5,6 @@ pub type StackTrace = Vec<(Rc<str>, usize)>;
 
 #[derive(Debug)]
 pub enum VmError {
-    // TODO prune
     AccessNilHeap(usize, StackTrace),
     AccessMissingSlotIndex { addr: usize, index: usize, stack_trace: StackTrace },
     ProcDoesNotExist(usize, StackTrace),
@@ -14,8 +13,6 @@ pub enum VmError {
     AccessMissingLocal(usize, StackTrace),
     LocalUnexpectedType{local: usize, stack_trace: StackTrace, expected: &'static str, found: Box<str>},
     TopLevelYield(usize),
-    AccessMissingCoroutine(usize, StackTrace),
-    ResumeFinishedCoroutine(usize, StackTrace),
 }
 
 impl std::fmt::Display for VmError {
@@ -41,10 +38,6 @@ impl std::fmt::Display for VmError {
                 write!(f, "Attempting to access missing local {}: \n{}", local, d(trace)),
             VmError::TopLevelYield(ip) =>
                 write!(f, "Top Level Yield no supported at instruction: {}", ip),
-            VmError::AccessMissingCoroutine(coroutine, trace) =>
-                write!(f, "Attempting to access missing coroutine {}: \n{}", coroutine, d(trace)),
-            VmError::ResumeFinishedCoroutine(coroutine, trace) =>
-                write!(f, "Attempting to resume finished coroutine {}: \n{}", coroutine, d(trace)),
         }
     }
 }

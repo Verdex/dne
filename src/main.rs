@@ -20,20 +20,30 @@ fn main() {
 
         let mut ir = vec![];
         for path in args {
+            use crate::parsing::ir_parser::ParseError;
+
             let file = File::open(path).expect("failed to open: {path}");
             let contents = std::io::read_to_string(file).expect("failure reading: {path}");
             let mut x = match parsing::ir_parser::parse(&contents) {
                 Ok(x) => x,
-                _ => todo!(),
+                Err(ParseError::Lex(x)) => todo!(),
+                Err(ParseError::Fatal(x, y)) => todo!(),
+                Err(x) => { panic!("{x}"); },
             };
             ir.append(&mut x);
         }
         
-        let procs = compiling::ir_compiler::compile(&ir).unwrap();
+        let procs = {
+            use crate::compiling::ir_compiler::CompileError;
+            match compiling::ir_compiler::compile(&ir) {
+                Ok(x) => x,
+                _ => todo!(),
+            }
+        };
 
         let main = procs.iter().enumerate().find(|(_, x)| *"main" == *x.name ).expect("cannot find main").0;
 
-        let mut vm = eval::vm::Vm::new(procs);
+        let mut vm = eval::vm::Vm::new(procs);  // TODO errors
 
         let result = vm.run(main);
          

@@ -7,13 +7,11 @@ mod eval;
 #[cfg(test)]
 mod ir_tests;
 
-use std::fs::File;
-
 fn main() {
 
-    let args = std::env::args().into_iter().collect::<Vec<_>>();
+    let args = std::env::args().into_iter().skip(1).collect::<Vec<_>>();
 
-    if args.len() <= 1 {
+    if args.len() == 0 {
         println!("usage: dne file+");
     }
     else {
@@ -22,8 +20,12 @@ fn main() {
         for path in args {
             use crate::parsing::ir_parser::ParseError;
 
-            let file = File::open(path).expect("failed to open: {path}");
-            let contents = std::io::read_to_string(file).expect("failure reading: {path}");
+            let contents = match std::fs::read_to_string(&path) {
+                Ok(x) => x,
+                Err(x) => {
+                    panic!("error reading {path}:\n\n{x}");
+                },
+            };
             let mut x = match parsing::ir_parser::parse(&contents) {
                 Ok(x) => x,
                 Err(ParseError::Lex(x)) => {

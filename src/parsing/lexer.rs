@@ -163,6 +163,116 @@ pub mod ir {
     }
 }
 
+/*
+pub mod dne {
+
+    use super::*;
+
+    #[derive(Debug, PartialEq)]
+    pub enum Token {
+        LParen,
+        RParen,
+        LCurl,
+        RCurl,
+        Comma,
+        SemiColon,
+        Colon,
+        Arrow,
+        Equal,
+        Int(i64),
+        Float(f64),
+        Bool(bool),
+        Symbol(Rc<str>),
+        ConsType(Rc<str>),
+        String(Rc<str>),
+    }
+
+    pub fn lex(input : &str) -> Result<Vec<(Token, usize, usize)>, usize> {
+        macro_rules! punct {
+            ($input:ident, $ret:ident, $i:ident, $t:expr) => { { let i = *$i; $input.next().unwrap(); $ret.push(($t, i, i)); } }
+        }
+
+        let max = input.len();
+        let mut input = input.char_indices().peekable();
+        let mut ret : Vec<(Token, usize, usize)> = vec![];
+        let mut comment = false;
+
+        loop {
+            match input.peek() {
+                Some((_, '/')) if comment => { take_while(&mut input, |x| x != '\n' && x != '\r'); comment = false;  }, 
+                Some((_, '*')) if comment => { input.next().unwrap(); block_comment(&mut input, max)?; comment = false; },
+                Some((_, '/')) => { input.next().unwrap(); comment = true; },
+                // Note:  Incomplete comment
+                Some((i, _)) if comment => { return Err(*i); },
+                None if comment => { return Err(max); },
+
+                None => { return Ok(ret); },
+                Some((_, c)) if c.is_whitespace() => {
+                    whitespace(&mut input)?;
+                },
+                Some((s, c)) if c.is_alphabetic() || *c == '_' => {
+                    let s = *s;
+                    let (t, l) = symbol(&mut input)?;
+                    ret.push((t, s, s + l));
+                },
+                Some((s, c)) if c.is_numeric() || *c == '-' => { 
+                    let s = *s;
+                    let (x, e) = number_or_arrow(&mut input)?;
+                    let x = match x {
+                        Num::Int(x) => Token::Int(x),
+                        Num::Float(x) => Token::Float(x),
+                        Num::Arrow => Token::Arrow,
+                    };
+
+                    ret.push((x, s, e));
+                },
+                Some((s, c)) if *c == '~' => {
+                    let s = *s;
+                    let (t, l) = cons_type(&mut input)?;
+                    ret.push((t, s, s + l));
+                },
+                Some((s, '"')) => {
+                    let s = *s;
+                    let (t, e) = string(&mut input, max)?;
+                    ret.push((Token::String(t), s, e));
+                },
+                Some((i, '(')) => punct!(input, ret, i, Token::LParen),
+                Some((i, ')')) => punct!(input, ret, i, Token::RParen), 
+                Some((i, '{')) => punct!(input, ret, i, Token::LCurl), 
+                Some((i, '}')) => punct!(input, ret, i, Token::RCurl), 
+                Some((i, ',')) => punct!(input, ret, i, Token::Comma),
+                Some((i, ';')) => punct!(input, ret, i, Token::SemiColon),
+                Some((i, ':')) => punct!(input, ret, i, Token::Colon), 
+                Some((i, '=')) => punct!(input, ret, i, Token::Equal), 
+                Some((i, _)) => { return Err(*i); },
+            }
+        }
+    }
+
+    fn cons_type(input : &mut Input) -> Result<(Token, usize), usize> {
+        input.next().unwrap();
+        let s = take_while(input, |c| c.is_alphanumeric() || c == '_');
+        let s = s.into_iter().collect::<String>();
+        let l = s.len() - 1;
+        Ok((Token::ConsType(s.into()), l))
+    }
+
+    fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {
+        let s = take_while(input, |c| c.is_alphanumeric() || c == '_');
+        let s = s.into_iter().collect::<String>();
+        let l = s.len() - 1;
+
+        let r = match s.as_str() {
+            "type" => Token::Type,
+            s => Token::Symbol(s.into()),
+        };
+
+        Ok((r, l))
+    }
+}
+
+*/
+
 fn whitespace(input : &mut Input) -> Result<(), usize> {
     while let Some((_, c)) = input.peek() && c.is_whitespace() {
         input.next().unwrap();

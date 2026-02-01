@@ -26,19 +26,22 @@ fn main() {
             let contents = std::io::read_to_string(file).expect("failure reading: {path}");
             let mut x = match parsing::ir_parser::parse(&contents) {
                 Ok(x) => x,
-                Err(ParseError::Lex(x)) => todo!(),
-                Err(ParseError::Fatal(x, y)) => todo!(),
+                Err(ParseError::Lex(x)) => {
+                    let x = crate::util::underline(&contents, x, x);
+                    panic!("encountered lexer error:\n\n{x}");
+                },
+                Err(ParseError::Fatal(x, y)) => {
+                    let x = crate::util::underline(&contents, x, y);
+                    panic!("encountered parser error:\n\n{x}");
+                },
                 Err(x) => { panic!("{x}"); },
             };
             ir.append(&mut x);
         }
         
-        let procs = {
-            use crate::compiling::ir_compiler::CompileError;
-            match compiling::ir_compiler::compile(&ir) {
-                Ok(x) => x,
-                _ => todo!(),
-            }
+        let procs = match compiling::ir_compiler::compile(&ir) {
+            Ok(x) => x,
+            Err(x) => { panic!("{x}"); }, 
         };
 
         let main = procs.iter().enumerate().find(|(_, x)| *"main" == *x.name ).expect("cannot find main").0;

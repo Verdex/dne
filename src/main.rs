@@ -45,10 +45,12 @@ fn main() {
         };
 
         let main = procs.iter().enumerate().find(|(_, x)| *"main" == *x.name ).expect("cannot find main").0;
+        let mut vm = eval::vm::Vm::new(procs);  
 
-        let mut vm = eval::vm::Vm::new(procs);  // TODO errors
-
-        let result = vm.run(main);
+        let result = match vm.run(main) {
+            Ok(x) => x,
+            Err(x) => { panic!("{x}"); },
+        };
          
         println!("{:?}", result);
     }

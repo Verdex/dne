@@ -163,7 +163,6 @@ pub mod ir {
     }
 }
 
-/*
 pub mod dne {
 
     use super::*;
@@ -174,16 +173,25 @@ pub mod dne {
         RParen,
         LCurl,
         RCurl,
+        LAngle,
+        RAngle,
+        LSquare,
+        RSquare,
         Comma,
         SemiColon,
         Colon,
         Arrow,
+        DArrow,
         Equal,
+        Fun,
+        Let,
+        Struct,
+        Enum,
+        Match,
+        Symbol(Rc<str>),
         Int(i64),
         Float(f64),
         Bool(bool),
-        Symbol(Rc<str>),
-        ConsType(Rc<str>),
         String(Rc<str>),
     }
 
@@ -226,11 +234,6 @@ pub mod dne {
 
                     ret.push((x, s, e));
                 },
-                Some((s, c)) if *c == '~' => {
-                    let s = *s;
-                    let (t, l) = cons_type(&mut input)?;
-                    ret.push((t, s, s + l));
-                },
                 Some((s, '"')) => {
                     let s = *s;
                     let (t, e) = string(&mut input, max)?;
@@ -240,21 +243,25 @@ pub mod dne {
                 Some((i, ')')) => punct!(input, ret, i, Token::RParen), 
                 Some((i, '{')) => punct!(input, ret, i, Token::LCurl), 
                 Some((i, '}')) => punct!(input, ret, i, Token::RCurl), 
+                Some((i, '<')) => punct!(input, ret, i, Token::LAngle), 
+                Some((i, '>')) => punct!(input, ret, i, Token::RAngle), 
+                Some((i, '[')) => punct!(input, ret, i, Token::LSquare), 
+                Some((i, ']')) => punct!(input, ret, i, Token::RSquare), 
                 Some((i, ',')) => punct!(input, ret, i, Token::Comma),
                 Some((i, ';')) => punct!(input, ret, i, Token::SemiColon),
                 Some((i, ':')) => punct!(input, ret, i, Token::Colon), 
-                Some((i, '=')) => punct!(input, ret, i, Token::Equal), 
+                Some((s, '=')) => {
+                    let s = *s;
+                    input.next().unwrap();
+                    match input.peek() {
+                        None => { return Ok(ret); },
+                        Some((e, '>')) => { ret.push((Token::DArrow, s, *e)); },
+                        _ => { ret.push((Token::Equal, s, s)); },
+                    }
+                },
                 Some((i, _)) => { return Err(*i); },
             }
         }
-    }
-
-    fn cons_type(input : &mut Input) -> Result<(Token, usize), usize> {
-        input.next().unwrap();
-        let s = take_while(input, |c| c.is_alphanumeric() || c == '_');
-        let s = s.into_iter().collect::<String>();
-        let l = s.len() - 1;
-        Ok((Token::ConsType(s.into()), l))
     }
 
     fn symbol(input : &mut Input) -> Result<(Token, usize), usize> {
@@ -263,7 +270,11 @@ pub mod dne {
         let l = s.len() - 1;
 
         let r = match s.as_str() {
-            "type" => Token::Type,
+            "fun" => Token::Fun,
+            "let" => Token::Let,
+            "struct" => Token::Struct,
+            "enum" => Token::Enum,
+            "match" => Token::Match,
             s => Token::Symbol(s.into()),
         };
 
@@ -271,7 +282,6 @@ pub mod dne {
     }
 }
 
-*/
 
 fn whitespace(input : &mut Input) -> Result<(), usize> {
     while let Some((_, c)) = input.peek() && c.is_whitespace() {

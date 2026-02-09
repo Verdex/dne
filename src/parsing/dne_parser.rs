@@ -119,13 +119,14 @@ fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
 }
 
 fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {
-    todo!()
-    /*
     let mut ret = vec![];
     loop {
-        if input.check(|x| x.eq(&Token::Set))? {
-            ret.push(parse_set(input)?);
+        if input.check(|x| x.eq(&Token::Let))? {
+            ret.push(parse_let(input)?);
         }
+        // TODO fun
+        // TODO pat 
+    /*
         else if input.check(|x| x.eq(&Token::Jump))? {
             let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
@@ -174,24 +175,27 @@ fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Delete(var));
         }
+    */
         else {
             return Ok(ret);
         }
     }
-    */
 }
 
-/*
-fn parse_set(input : &mut Input) -> Result<Stmt, ParseError> {
-    let var = expect_sym(input)?; 
-    input.expect(|x| x.eq(&Token::Colon))?;
-    let ttype = parse_type(input)?;
+fn parse_let(input : &mut Input) -> Result<Def, ParseError> {
+    // let x [: Type] = expr;
+    let name = expect_sym(input)?; 
+    let ttype = if input.check(|x| x.eq(&Token::Colon))? {
+        Some(parse_type(input)?)
+    }
+    else {
+        None
+    };
     input.expect(|x| x.eq(&Token::Equal))?;
-    let val = parse_expr(input)?;
+    let expr = parse_expr(input)?;
     input.expect(|x| x.eq(&Token::SemiColon))?;
-    Ok(Stmt::Set { var, val, ttype })
+    Ok(Def::Let { name, ttype, expr })
 }
-*/
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
     todo!()

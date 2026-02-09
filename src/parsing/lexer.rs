@@ -440,7 +440,7 @@ mod test {
     }
 
     #[test]
-    fn should_lex_punct() {
+    fn should_lex_ir_punct() {
         let input = "(){}:;,=";
         let output = ir::lex(input).unwrap();
         assert_eq!(output.len(), 8);

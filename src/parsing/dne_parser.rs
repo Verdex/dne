@@ -183,7 +183,6 @@ fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {
 }
 
 fn parse_let(input : &mut Input) -> Result<Def, ParseError> {
-    // let x [: Type] = expr;
     let name = expect_sym(input)?; 
     let ttype = if input.check(|x| x.eq(&Token::Colon))? {
         Some(parse_type(input)?)

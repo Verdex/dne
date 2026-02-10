@@ -61,6 +61,8 @@ pub enum Lit {
 pub enum Expr { 
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Expr> },
+    Cons { ttype: Rc<str>, cons: Rc<str>, params: Vec<Expr> },
+    Var(Rc<str>),
 }
 
 pub fn parse(input : &str) -> Result<Vec<Fun>, ParseError> {
@@ -199,8 +201,6 @@ fn parse_let(input : &mut Input) -> Result<Def, ParseError> {
 }
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
-    todo!()
-    /*
     if let Token::Int(x) = input.peek()? {
         let x = *x;
         input.take()?;
@@ -216,83 +216,21 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         input.take()?;
         Ok(Expr::Lit(Lit::Bool(x)))
     }
-    else if let Token::ConsType(x) = input.peek()? {
-        let x = Rc::clone(x);
-        input.take()?;
-        Ok(Expr::Lit(Lit::ConsType(x)))
-    }
-    else if let Token::Symbol(x) = input.peek()? {
-        let x = Rc::clone(x);
-        input.take()?;
-        Ok(Expr::Var(x))
-    }
     else if let Token::String(x) = input.peek()? {
         let x = Rc::clone(x);
         input.take()?;
         Ok(Expr::Lit(Lit::String(x)))
     }
-    else if input.check(|x| x.eq(&Token::Call))? {
-        let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::Call { name, params })
-    }
-    else if input.check(|x| x.eq(&Token::DynCall))? {
-        let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::DynCall { name, params })
-    }
-    else if input.check(|x| x.eq(&Token::Coroutine))? {
-        let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::Coroutine { name, params })
-    }
-    else if input.check(|x| x.eq(&Token::DynCoroutine))? {
-        let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::DynCoroutine { name, params })
-    }
-    else if input.check(|x| x.eq(&Token::Closure))? {
-        let name = expect_sym(input)?;
-        let env = expect_params(input)?;
-        Ok(Expr::Closure { name, env })
-    }
-    else if input.check(|x| x.eq(&Token::Cons))? {
-        let name = expect_sym(input)?;
-        let params = expect_params(input)?;
-        Ok(Expr::Cons { name, params })
-    }
-    else if input.check(|x| x.eq(&Token::Resume))? {
-        Ok(Expr::Resume(expect_sym(input)?)) 
-    }
-    else if input.check(|x| x.eq(&Token::Length))? {
-        Ok(Expr::Length(expect_sym(input)?)) 
-    }
-    else if input.check(|x| x.eq(&Token::Type))? {
-        Ok(Expr::Type(expect_sym(input)?)) 
-    }
-    else if input.check(|x| x.eq(&Token::Slot))? {
-        let var = expect_sym(input)?;
-        let index = expect_index(input)?;
-        Ok(Expr::Slot { var, index })
-    }
-    else if input.check(|x| x.eq(&Token::IsNil))? {
-        let var = expect_sym(input)?;
-        Ok(Expr::IsNil(var))
-    }
-    else if input.check(|x| x.eq(&Token::ToString))? {
-        let var = expect_sym(input)?;
-        Ok(Expr::ToString(var))
-    }
-    else if input.check(|x| x.eq(&Token::Concat))? {
-        let var1 = expect_sym(input)?;
-        let var2 = expect_sym(input)?;
-        Ok(Expr::Concat(var1, var2))
+    else if let Token::Symbol(x) = input.peek()? {
+        // TODO: can also be cons or function call
+        let x = Rc::clone(x);
+        input.take()?;
+        Ok(Expr::Var(x))
     }
     else {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
     }
-    */
 }
 
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
@@ -323,29 +261,6 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
     }
-}
-
-fn expect_params(input : &mut Input) -> Result<Vec<Rc<str>>, ParseError> {
-    input.expect(|x| x.eq(&Token::LParen))?;
-    let mut ret = vec![];
-    if input.check(|x| x.eq(&Token::RParen))? {
-        return Ok(ret);
-    }
-    loop {
-        ret.push(expect_sym(input)?);
-        
-        if input.check(|x| x.eq(&Token::RParen))? {
-            break;
-        }
-        else if input.check(|x| x.eq(&Token::Comma))? {
-            continue;
-        }
-        else {
-            let (s, e) = input.current()?;
-            return Err(ParseError::Fatal(s, e));
-        }
-    }
-    Ok(ret)
 }
 
 

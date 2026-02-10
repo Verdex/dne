@@ -43,8 +43,10 @@ pub enum Def {
     Fun(Fun),
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Type {
+#[derive(Debug)]
+pub struct Type {
+    pub name : Rc<str>,
+    pub params : Vec<Type>,
 }
 
 #[derive(Debug)]
@@ -294,24 +296,21 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 }
 
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
-    todo!()
-    /*
-    let t = expect_sym(input)?; 
-    match &*t {
-        "Int" => Ok(Type::Int),
-        "Float" => Ok(Type::Float),
-        "String" => Ok(Type::String),
-        "Bool" => Ok(Type::Bool),
-        "Symbol" => Ok(Type::Symbol),
-        "Ref" => Ok(Type::Ref),
-        "Closure" => Ok(Type::Closure),
-        "Coroutine" => Ok(Type::Coroutine),
-        _ => {
-            let (s, e) = input.current()?;
-            Err(ParseError::Fatal(s, e))
-        },
+    let name = expect_sym(input)?; 
+    let params = if input.check(|x| x.eq(&Token::LAngle))? {
+        let mut ret = vec![parse_type(input)?];
+        loop {
+            if input.check(|x| x.eq(&Token::RAngle))? {
+                break ret;
+            }
+            input.expect(|x| x.eq(&Token::Comma))?; 
+            ret.push(parse_type(input)?);
+        }
     }
-    */
+    else {
+        vec![]
+    };
+    Ok(Type { name, params })
 }
 
 fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {

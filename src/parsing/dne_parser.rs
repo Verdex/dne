@@ -27,7 +27,7 @@ impl std::error::Error for ParseError { }
 pub struct Fun {
     pub name: Rc<str>, 
     pub type_params: Vec<Rc<str>>,
-    pub params: Vec<(Rc<str>, Type)>, 
+    pub params: Vec<(Expr, Type)>, 
     pub return_type: Type, 
     pub defs: Vec<Def>,
     pub expr: Expr,
@@ -63,6 +63,10 @@ pub enum Expr {
     Call { name : Rc<str>, params : Vec<Expr> },
     Cons { ttype: Rc<str>, cons: Rc<str>, params: Vec<Expr> },
     Var(Rc<str>),
+    // TODO lambda
+    // list constructor
+    // tuple constructor
+    // match
 }
 
 pub fn parse(input : &str) -> Result<Vec<Fun>, ParseError> {
@@ -75,6 +79,7 @@ pub fn parse(input : &str) -> Result<Vec<Fun>, ParseError> {
     parse_funs(&mut input)
 }
 
+// TODO also parse struct and enum
 fn parse_funs(input : &mut Input) -> Result<Vec<Fun>, ParseError> {
     let mut ret = vec![];
     while !input.empty() {
@@ -90,13 +95,25 @@ fn parse_funs(input : &mut Input) -> Result<Vec<Fun>, ParseError> {
 }
 
 fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
-    todo!()
-    /*let name = expect_sym(input)?;
+    let name = expect_sym(input)?;
+    let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
+        let mut ret = vec![expect_sym(input)?];
+        loop {
+            if input.check(|x| x.eq(&Token::RAngle))? {
+                break ret;
+            }
+            input.expect(|x| x.eq(&Token::Comma))?; 
+            ret.push(expect_sym(input)?);
+        }
+    }
+    else {
+        vec![]
+    };
     input.expect(|x| x.eq(&Token::LParen))?;
     let mut params = vec![];
     if !input.check(|x| x.eq(&Token::RParen))? {
         loop {
-            let param = expect_sym(input)?;
+            let param = parse_expr(input)?;
             input.expect(|x| x.eq(&Token::Colon))?;
             let ttype = parse_type(input)?;
             params.push((param, ttype));
@@ -116,10 +133,10 @@ fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
     input.expect(|x| x.eq(&Token::Arrow))?;
     let return_type = parse_type(input)?;
     input.expect(|x| x.eq(&Token::LCurl))?;
-    let body = parse_stmts(input)?;
+    let defs = parse_defs(input)?;
+    let expr = parse_expr(input)?;
     input.expect(|x| x.eq(&Token::RCurl))?;
-    Ok( Proc{ name, params, return_type, body })
-    */
+    Ok( Fun{ name, type_params, params, return_type, defs, expr })
 }
 
 fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {

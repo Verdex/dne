@@ -25,7 +25,6 @@ impl std::error::Error for CompileError { }
 
 pub fn compile(input : &[Fun]) -> Result<Rc<str>, CompileError> {
     
-//    let proc_map = HashMap::from_iter(op_sigs.iter().chain(procs.iter()).enumerate().map(|(v, k)| (Rc::clone(&k.name), (k, v))));
     todo!()
 }
 

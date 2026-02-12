@@ -43,7 +43,7 @@ pub enum Def {
     Fun(Fun),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Type {
     pub name : Rc<str>,
     pub params : Vec<Type>,

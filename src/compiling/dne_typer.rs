@@ -46,3 +46,5 @@ fn check_fun(fun : &Fun, fun_types : &TypeMap) -> Vec<StaticError> {
     // TODO check calls
     todo!()
 }
+
+

@@ -24,6 +24,22 @@ pub struct Unify<'a> {
 impl<'a> Unify<'a> {
     pub fn new() -> Self { Unify { reg: HashMap::new(), vars: vec![] } } 
 
+    pub fn env(&self) -> Vec<(Rc<str>, &'a Term)> {
+        self.reg.iter().filter_map(|(k, v)| {
+            match &self.vars[*v] {
+                Vif::Value(x) => Some((Rc::clone(k), *x)),
+                Vif::Index(x) => {
+                    match self.follow(*x).1 {
+                        None => None,
+                        Some(x) => Some((Rc::clone(k), x)),
+                    }
+                },
+                Vif::Free => None,
+            }
+        }).collect()
+    }
+
+// TODO occurs
     pub fn unify(&mut self, a : &'a Term, b : &'a Term) -> bool {
         match (a, b) {
             (Term::Data(a_name, _), Term::Data(b_name, _)) if a_name != b_name => false,
@@ -63,8 +79,8 @@ impl<'a> Unify<'a> {
         }
     }
 
-    fn follow(&self, x : usize) -> (usize, Option<&'a Term>) {
-        while let Vif::Index(x) = self.vars[x] { }
+    fn follow(&self, mut x : usize) -> (usize, Option<&'a Term>) {
+        while let Vif::Index(y) = self.vars[x] { x = y; }
         match self.vars[x] {
             Vif::Value(v) => (x, Some(v)),
             Vif::Free => (x, None),
@@ -89,144 +105,72 @@ impl<'a> Unify<'a> {
 mod test {
     use super::*;
 
+    fn var(x : &str) -> Term { Term::Var(x.into()) }
+    fn atom(x : &str) -> Term { Term::Data(x.into(), vec![]) }
+    fn rule(x : &str, xs : Vec<Term>) -> Term { Term::Data(x.into(), xs) }
+
     #[test]
     fn should_link_free_vars() {
-        
+        let a = var("a"); 
+        let b = var("b"); 
+        let mut u = Unify::new();
+
+        let r = u.unify(&a, &b);
+        assert!(r);
+
+        let c = atom("c");
+        let r = u.unify(&a, &c);
+        assert!(r);
+
+        let r = u.env();
+        assert_eq!( r.len(), 2 );
+    }
+
+    #[test]
+    fn should_link_linked_free_vars() {
+        let a = var("a"); 
+        let b = var("b"); 
+        let c = var("c"); 
+        let d = var("d"); 
+        let mut u = Unify::new();
+
+        let r = u.unify(&a, &b);
+        assert!(r);
+
+        let r = u.unify(&c, &d);
+        assert!(r);
+
+        let r = u.unify(&b, &d);
+        assert!(r);
+
+        let x = atom("x");
+
+        let r = u.unify(&d, &x);
+        assert!(r);
+
+        let r = u.env();
+        assert_eq!( r.len(), 4 );
+    }
+
+    #[test]
+    fn should_unify_rules() {
+        let a = var("a"); 
+        let b = var("b"); 
+        let c = var("c"); 
+        let d = atom("1"); 
+        let f = atom("2"); 
+        let e = rule("e", vec![b, f]);
+        let g = rule("e", vec![d, c]);
+        let mut u = Unify::new();
+
+        let r = u.unify(&a, &e);
+        assert!(r);
+
+        let r = u.unify(&a, &g);
+        assert!(r);
+
+        let r = u.env();
+        assert_eq!( r.len(), 3 );
     }
 }
 
-/*
-#[derive(Debug)]
-pub struct Unify {
-    map : HashMap<Rc<str>, Rc<Term>>,
-    gensym : usize,
-}
-
-#[derive(Debug)]
-pub enum Term {
-    Nil(usize),
-    Var(Rc<str>),
-    Rule(Rc<str>, Vec<Rc<Term>>),
-}
-
-impl Unify {
-    pub fn new() -> Self { Unify { map : HashMap::new(), gensym: 0 } }
-
-    fn free(&self, key : &Rc<str>) -> bool {
-        !self.map.contains_key(key) || match self.map[key] { Term::Nil(_) => true, _ => false }
-    }
-
-    fn bound(&self, key : &Rc<str>) -> bool {  // TODO
-        self.map.contains_key(key)
-    }
-
-    fn link(&mut self, a : &Rc<str>, b : &Rc<str>) {
-        assert!( self.free(a) && self.free(b) ); // TODO
-
-        if !self.map.contains_key(a) && !self.map.contains_key(b) {
-            let x = self.g();
-            self.map.insert(a, Term::Nil(x));
-            self.map.insert(b, Term::Nil(x));
-        }
-        else if self.map.contains_key(a) && !self.map.contains_key(b) {
-            let x = match self.map[a] {
-                Term::Nil(x) => x,
-                _ => panic!(),
-            };
-            self.map.insert(b.to_string(), Term::Nil(x));
-        }
-        else if !self.map.contains_key(a) && self.map.contains_key(b) {
-            let x = match self.map[b] {
-                Term::Nil(x) => x,
-                _ => panic!(),
-            };
-            self.map.insert(a.to_string(), Term::Nil(x));
-        }
-        else {
-            let a = match self.map[a] {
-                Term::Nil(x) => x,
-                _ => panic!(),
-            };
-            let b = match self.map[b] {
-                Term::Nil(x) => x,
-                _ => panic!(),
-            };
-
-            for (_, v) in self.map.iter_mut().filter(|(_, v)| match v { Term::Nil(x) => x == a, _ => false } ) {
-                *v = Term::Nil(b);
-            }
-        }
-    }
-
-    fn bind(&mut self, key: &Rc<str>, input: &Rc<Term>) {
-        assert!(self.free(key)); // TODO 
-
-        if !self.map.contains_key(key) {
-            self.map.insert(key, Rc::clone(input));
-        }
-        else {
-            let a = match &*self.map[key] { Term::Nil(x) => *x, _ => panic!() };
-            for (_, v) in self.map.iter_mut().filter(|(_, v)| match &***v { Term::Nil(x) => *x == a, _ => false } ) {
-                *v = Rc::clone(input);
-            }
-        }
-    }
-
-    fn get(&self, key : &Rc<str>) -> Rc<Term> {
-        Rc::clone(&self.map[key]) 
-    }
-
-    fn g(&mut self) -> usize {
-        self.gensym += 1;
-        self.gensym
-    }
-
-    fn unify(&mut self, a : &Rc<Term>, b : &Rc<Term>) -> bool {
-        use Term::*;
-        assert!( !matches!(&**a, Term::Nil(_)) && !matches!(&**b, Term::Nil(_)) ); // TODO
-        match (&**a, &**b) {
-            (Var(a), Var(b)) if self.free(&a) && self.free(&b) => { self.link(&a, &b); true },
-            (Var(a), Var(b)) if self.free(&a) => { 
-                let b = self.get(&b);
-                self.bind(&a, &b);
-                true 
-            },
-            (Var(a), Var(b)) if self.free(&b) => { 
-                let a = self.get(&a);
-                self.bind(&b, &a);
-                true 
-            },
-            (Var(a), Var(b)) => { 
-                let a = self.get(&a);
-                let b = self.get(&b);
-                self.unify(&a, &b)
-            },
-            (Var(a), _) if self.free(&a) => {
-                self.bind(&a, &b);
-                true
-            },
-            (_, Var(b)) if self.free(&b) => {
-                self.bind(&b, &a);
-                true
-            },
-            (Var(a), _) => {
-                let a = self.get(&a);
-                self.unify(&a, b)
-            },
-            (_, Var(b)) => {
-                let b = self.get(&b);
-                self.unify(a, &b)
-            },
-            (Rule(a_name, _), Rule(b_name, _)) if a_name != b_name => false,
-            (Rule(_, a_rest), Rule(_, b_rest)) => {
-                a_rest.into_iter().zip(b_rest.into_iter()).map(|(a, b)| self.unify(&a, &b)).all(|x| x)
-            },
-            (Nil(_), _) | (_, Nil(_)) => unreachable!(),
-        }
-    }
-}
-
-fn var(x : &Rc<str>) -> Term { Term::Var(Rc::clone(x)) }
-fn atom(x : &Rc<str>) -> Term { Term::Rule(Rc::clone(x), vec![]) }
-fn rule(x : &Rc<str>, xs : Vec<Rc<Term>>) -> Term { Term::Rule(Rc::clone(x), xs) }
-*/

@@ -27,7 +27,7 @@ impl std::error::Error for ParseError { }
 pub struct Fun {
     pub name: Rc<str>, 
     pub type_params: Vec<Rc<str>>,
-    pub params: Vec<(Expr, Type)>, 
+    pub params: Vec<(Rc<str>, Type)>, 
     pub return_type: Type, 
     pub defs: Vec<Def>,
     pub expr: Expr,
@@ -113,7 +113,7 @@ fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
     let mut params = vec![];
     if !input.check(|x| x.eq(&Token::RParen))? {
         loop {
-            let param = parse_expr(input)?;
+            let param = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::Colon))?;
             let ttype = parse_type(input)?;
             params.push((param, ttype));

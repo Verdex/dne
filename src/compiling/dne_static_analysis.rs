@@ -9,6 +9,9 @@ type TypeMap<'a> = HashMap<Rc<str>, FunTypeInfo<'a>>;
 pub enum StaticError {
     DupFunName(Rc<str>), 
     BuiltInCollision(Rc<str>),
+    // TODO dup type names
+    // TODO type name collides with built in
+    // TODO type parameter shadows outer type
 }
 
 pub struct FunTypeInfo<'a> {

@@ -4,6 +4,9 @@ use std::collections::{ HashSet, HashMap };
 
 use crate::parsing::dne_parser::*;
 
+use super::unifier::{Term, Unify};
+
+
 type TypeMap<'a> = HashMap<Rc<str>, FunTypeInfo<'a>>;
 
 pub enum StaticError {
@@ -11,7 +14,7 @@ pub enum StaticError {
     BuiltInCollision(Rc<str>),
     // TODO dup type names
     // TODO type name collides with built in
-    // TODO type parameter shadows outer type
+    // TODO type parameter shadows outer type (maybe a problem?)
 }
 
 pub struct FunTypeInfo<'a> {
@@ -40,6 +43,8 @@ pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<()
     fun_names.append(&mut built_in_names);
     check( dup_fun( fun_names ).into_iter().map(StaticError::BuiltInCollision).collect() )?;
 
+    // TODO for each function determine if it has duplicate variable names
+
     check( types(program, built_ins) )?;
 
     Ok(())
@@ -54,19 +59,48 @@ fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
     program.iter().flat_map(|x| check_fun(x, &fun_types)).collect()
 }
 
-fn check_fun(fun : &Fun, fun_types : &TypeMap) -> Vec<StaticError> {
-    use super::unifier::{Term, Unify};
+fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Vec<StaticError> {
 
-    fn var(x : &str) -> Term { Term::Var(x.into()) }
-    fn atom(x : &str) -> Term { Term::Data(x.into(), vec![]) }
-    fn rule(x : &str, xs : Vec<Term>) -> Term { Term::Data(x.into(), xs) }
+    // TODO rename
+    fn var(x : &Rc<str>) -> Term { Term::Var(Rc::clone(x)) }
+    fn atom(x : &Rc<str>) -> Term { Term::Data(Rc::clone(x), vec![]) }
+    fn rule(x : &Rc<str>, xs : Vec<Term>) -> Term { Term::Data(Rc::clone(x), xs) }
+    
+    let mut unifier = Unify::new();
+
+    let mut ts : HashMap<Rc<str>, Term> = 
+        HashMap::from_iter(target.params.iter().map(|(n, t)| (Rc::clone(n), type_to_term(t, &HashSet::new()))));
     
 
+    // TODO build up hashmap with variable to type (which i think is only internal to expr type)
+    // Note target's param types don't really matter because they can be considered as some type X
+    // called funs param types will matter because we'll be computing them
+    // TODO also note that each time a function (which has already been called) with a type var is called it will need a fresh variable
 
-    // TODO param types
-    // TODO let types
-    // TODO check calls
+
+    // TODO add lets and local funs to ts
+
+    // TODO compute expr and make sure its valid and matches return type
+
     todo!()
+}
+
+// TODO will have ts and global fun types as inputs
+// TODO i think can have it's own unifier because when we're done we need a real type
+// TODO will need the return type (fun x<T>() -> Fun<T, T> { fun a<S>( x : S ) -> S { x } a }
+// that example unifies 'a' that has effectively forall s . s -> s into T -> T
+fn check_expr(expr : Expr) -> Result<Type, Vec<StaticError>> { 
+
+    todo!()
+}
+
+fn type_to_term(t : &Type, vars : &HashSet<Rc<str>>) -> Term {
+    if vars.contains(&t.name) && t.params.len() == 0 {
+        Term::Var(Rc::clone(&t.name))
+    }
+    else {
+        Term::Data(Rc::clone(&t.name), t.params.iter().map(|x| type_to_term(x, vars)).collect())
+    }
 }
 
 fn dup_fun(mut x : Vec<Rc<str>>) -> Vec<Rc<str>> {

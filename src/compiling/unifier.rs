@@ -107,9 +107,9 @@ impl Unify {
 mod test {
     use super::*;
 
-    fn var(x : &str) -> Term { Term::Var(x.into()) }
-    fn atom(x : &str) -> Term { Term::Data(x.into(), vec![]) }
-    fn rule(x : &str, xs : Vec<Term>) -> Term { Term::Data(x.into(), xs) }
+    fn var(x : &str) -> Rc<Term> { Term::Var(x.into()).into() }
+    fn atom(x : &str) -> Rc<Term> { Term::Data(x.into(), vec![]).into() }
+    fn rule(x : &str, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(x.into(), xs).into() }
 
     #[test]
     fn should_link_free_vars() {

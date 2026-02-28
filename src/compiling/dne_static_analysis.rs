@@ -64,18 +64,14 @@ fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
 
 fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Result<(), Vec<StaticError>> {
 
-    // TODO rename
-    fn var(x : &Rc<str>) -> Term { Term::Var(Rc::clone(x)) }
-    fn atom(x : &Rc<str>) -> Term { Term::Data(Rc::clone(x), vec![]) }
-    fn rule(x : &Rc<str>, xs : Vec<Term>) -> Term { Term::Data(Rc::clone(x), xs) }
     
     let mut checker = Checker::new();
 
     for (n, t) in &target.params {
-        checker.type_var(n, type_to_term(&t, &HashSet::new()));
+        checker.type_var(n, &type_to_term(&t, &HashSet::new()));
     }
 
-    check(expr(&mut checker, &target.expr, type_to_term(&target.return_type, &HashSet::new())))?;
+    check_expr(&mut checker, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))?;
 
     // TODO build up hashmap with variable to type (which i think is only internal to expr type)
     // Note target's param types don't really matter because they can be considered as some type X
@@ -90,35 +86,33 @@ fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Result<(), Vec<Stati
     todo!()
 }
 
-fn expr(checker : &mut Checker, expr : &Expr, expected_type : Term) -> Vec<StaticError> { 
+fn check_expr(checker : &mut Checker, expr : &Expr, expected_type : &Rc<Term>) -> Result<(), Vec<StaticError>> { 
     let t = match expr {
-        Expr::Lit(Lit::Int(_)) => Term::Data("Int".into(), vec![]),
-        Expr::Lit(Lit::Float(_)) => Term::Data("Float".into(), vec![]),
-        Expr::Lit(Lit::Bool(_)) => Term::Data("Bool".into(), vec![]),
-        Expr::Lit(Lit::String(_)) => Term::Data("String".into(), vec![]),
+        Expr::Lit(Lit::Int(_)) => u_atom(&"Int".into()),
+        Expr::Lit(Lit::Float(_)) => u_atom(&"Float".into()),
+        Expr::Lit(Lit::Bool(_)) => u_atom(&"Bool".into()),
+        Expr::Lit(Lit::String(_)) => u_atom(&"String".into()),
+        Expr::Var(x) => checker.get_type(x)?,
         _ => todo!(),
     };
-    // TODO:  This seems unfortunate
-    let error_expected_type : Rc<str> = format!("{:?}", expected_type).into();
-    let error_found_type : Rc<str> = format!("{:?}", t).into();
-    if !checker.unify_types(t, expected_type) {
-        vec![ StaticError::ExprIllTyped { 
+    if !checker.unify_types(&t, expected_type) {
+        Err(vec![ StaticError::ExprIllTyped { 
             expr: format!("{:?}", expr).into(), 
-            found_type: error_found_type,
-            expected_type: error_expected_type,
-        }]
+            found_type: format!("{:?}", t).into(),
+            expected_type: format!("{:?}", expected_type).into(),
+        }])
     }
     else {
-        vec![]
+        Ok(())
     }
 }
 
-fn type_to_term(t : &Type, vars : &HashSet<Rc<str>>) -> Term {
-    if vars.contains(&t.name) && t.params.len() == 0 {
-        Term::Var(Rc::clone(&t.name))
+fn type_to_term(t : &Type, type_vars : &HashSet<Rc<str>>) -> Rc<Term> {
+    if type_vars.contains(&t.name) && t.params.len() == 0 {
+        u_var(&t.name)
     }
     else {
-        Term::Data(Rc::clone(&t.name), t.params.iter().map(|x| type_to_term(x, vars)).collect())
+        u_data(&t.name, t.params.iter().map(|x| type_to_term(x, type_vars)).collect())
     }
 }
 
@@ -134,23 +128,31 @@ fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
     else { Err(x) }
 }
 
-struct Checker<'a> {
-    unifier : Unify<'a>,
-    vars : HashMap<Rc<str>, Term>,
+struct Checker {
+    unifier : Unify,
+    vars : HashMap<Rc<str>, Rc<Term>>,
 }
 
-impl<'a> Checker<'a> {
+impl Checker {
     pub fn new() -> Self { Checker { unifier: Unify::new(), vars: HashMap::new() } }
 
     pub fn infer_var(&mut self, var : &Rc<str>) {
         todo!()
     }
 
-    pub fn type_var(&mut self, var : &Rc<str>, t : Term) {
+    pub fn type_var(&mut self, var : &Rc<str>, t : &Rc<Term>) {
         todo!()
     }
 
-    pub fn unify_types(&mut self, a : Term, b : Term) -> bool {
+    pub fn get_type(&mut self, var : &Rc<str>) -> Result<Rc<Term>, Vec<StaticError>> {
+        todo!()
+    }
+
+    pub fn unify_types(&mut self, a : &Rc<Term>, b : &Rc<Term>) -> bool {
         todo!()
     }
 }
+
+fn u_var(x : &Rc<str>) -> Rc<Term> { Term::Var(Rc::clone(x)).into() }
+fn u_atom(x : &Rc<str>) -> Rc<Term> { Term::Data(Rc::clone(x), vec![]).into() }
+fn u_data(x : &Rc<str>, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(Rc::clone(x), xs).into() }

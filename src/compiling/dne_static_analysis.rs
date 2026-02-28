@@ -9,10 +9,12 @@ use super::unifier::{Term, Unify};
 
 type TypeMap<'a> = HashMap<Rc<str>, FunTypeInfo<'a>>;
 
+#[derive(Debug)]
 pub enum StaticError {
     DupFunName(Rc<str>), 
     BuiltInCollision(Rc<str>),
     ExprIllTyped { expr: Rc<str>, found_type : Rc<str>, expected_type : Rc<str> },
+    UnknownVar(Rc<str>),
     // TODO dup type names
     // TODO type name collides with built in
     // TODO type parameter shadows outer type (maybe a problem?)
@@ -36,6 +38,7 @@ impl<'a> From<&'a Fun> for FunTypeInfo<'a> {
     }
 }
 
+// TODO need to augment results such that the fun name is attached to each group
 pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<(), Vec<StaticError>> {
     let mut fun_names = program.iter().map(|x| Rc::clone(&x.name)).collect::<Vec<_>>();
     check( dup_fun( fun_names.clone() ).into_iter().map(StaticError::DupFunName).collect() )?;
@@ -71,7 +74,7 @@ fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Result<(), Vec<Stati
         checker.type_var(n, &type_to_term(&t, &HashSet::new()));
     }
 
-    check_expr(&mut checker, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))?;
+    check_expr(&mut checker, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))
 
     // TODO build up hashmap with variable to type (which i think is only internal to expr type)
     // Note target's param types don't really matter because they can be considered as some type X
@@ -83,7 +86,6 @@ fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Result<(), Vec<Stati
 
     // TODO compute expr and make sure its valid and matches return type
 
-    todo!()
 }
 
 fn check_expr(checker : &mut Checker, expr : &Expr, expected_type : &Rc<Term>) -> Result<(), Vec<StaticError>> { 
@@ -141,18 +143,60 @@ impl Checker {
     }
 
     pub fn type_var(&mut self, var : &Rc<str>, t : &Rc<Term>) {
-        todo!()
+        self.vars.insert(Rc::clone(var), Rc::clone(t));
     }
 
     pub fn get_type(&mut self, var : &Rc<str>) -> Result<Rc<Term>, Vec<StaticError>> {
-        todo!()
+        match self.vars.get(var) {
+            None => Err(vec![StaticError::UnknownVar(Rc::clone(var))]),
+            Some(x) => Ok(Rc::clone(x)),
+        }
     }
 
     pub fn unify_types(&mut self, a : &Rc<Term>, b : &Rc<Term>) -> bool {
-        todo!()
+        self.unifier.unify(a, b)
     }
 }
 
 fn u_var(x : &Rc<str>) -> Rc<Term> { Term::Var(Rc::clone(x)).into() }
 fn u_atom(x : &Rc<str>) -> Rc<Term> { Term::Data(Rc::clone(x), vec![]).into() }
 fn u_data(x : &Rc<str>, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(Rc::clone(x), xs).into() }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::parsing::dne_parser::*;
+
+    #[test]
+    fn should_type_check_single_int_lit() {
+        let x = r#"fun x() -> Int { 0 }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_type_check_single_float_lit() {
+        let x = r#"fun x() -> Float { -1.1 }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_type_check_single_string_lit() {
+        let x = r#"fun x() -> String { "string" }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_type_check_single_bool_lit() {
+        let x = r#"fun x() -> Bool { true }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+}

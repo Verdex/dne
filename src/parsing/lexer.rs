@@ -275,6 +275,8 @@ pub mod dne {
             "struct" => Token::Struct,
             "enum" => Token::Enum,
             "match" => Token::Match,
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
             s => Token::Symbol(s.into()),
         };
 

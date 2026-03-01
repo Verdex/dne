@@ -32,12 +32,22 @@ pub enum Top {
 
 #[derive(Debug)]
 pub struct Enum {
-    // TODO (and enum cases?)
+    pub name: Rc<str>,
+    pub type_params: Vec<Rc<str>>,
+    pub cases : Vec<EnumCase>,
+}
+
+#[derive(Debug)]
+pub struct EnumCase {
+    pub name: Rc<str>,
+    pub params: Vec<Type>,
 }
 
 #[derive(Debug)]
 pub struct Struct {
-    // TODO
+    pub name: Rc<str>,
+    pub type_params: Vec<Rc<str>>,
+    pub fields: Vec<(Rc<str>, Type)>,
 }
 
 #[derive(Debug)]

@@ -176,7 +176,7 @@ mod test {
     }
 
     #[test]
-    fn should_type_check_single_float_lit_with_return(() {
+    fn should_type_check_single_float_lit_with_return() {
         let x = r#"fun x() -> Float { -1.1 }"#;
         let y = parse(x).unwrap();
         let z = static_check(&y, vec![]);
@@ -184,7 +184,7 @@ mod test {
     }
 
     #[test]
-    fn should_type_check_single_string_lit_with_return(() {
+    fn should_type_check_single_string_lit_with_return() {
         let x = r#"fun x() -> String { "string" }"#;
         let y = parse(x).unwrap();
         let z = static_check(&y, vec![]);
@@ -192,7 +192,7 @@ mod test {
     }
 
     #[test]
-    fn should_type_check_single_bool_lit_with_return(() {
+    fn should_type_check_single_bool_lit_with_return() {
         let x = r#"fun x() -> Bool { true }"#;
         let y = parse(x).unwrap();
         let z = static_check(&y, vec![]);

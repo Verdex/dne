@@ -60,8 +60,7 @@ pub enum Lit {
 #[derive(Debug)]
 pub enum Expr { 
     Lit(Lit), 
-    Call { name : Rc<str>, params : Vec<Expr> },
-    Cons { ttype: Rc<str>, cons: Rc<str>, params: Vec<Expr> },
+    CallOrCons { name : Rc<str>, params : Vec<Expr> },
     Var(Rc<str>),
     // TODO lambda
     // list constructor
@@ -239,14 +238,27 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         Ok(Expr::Lit(Lit::String(x)))
     }
     else if let Token::Symbol(x) = input.peek()? {
-        // TODO: can also be cons or function call
         let x = Rc::clone(x);
         input.take()?;
-        Ok(Expr::Var(x))
+        parse_var_follow_on(input, x)
     }
     else {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
+    }
+}
+
+fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, ParseError> {
+    if input.check(|x| x.eq(&Token::LParen))? {
+        let mut params = vec![];
+        while !input.check(|x| x.eq(&Token::RParen))? {
+            params.push(parse_expr(input)?);
+            input.expect(|x| x.eq(&Token::Comma))?;
+        }
+        Ok(Expr::CallOrCons { name, params } )
+    }
+    else {
+        Ok(Expr::Var(name))
     }
 }
 

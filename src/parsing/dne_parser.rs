@@ -32,12 +32,12 @@ pub enum Top {
 
 #[derive(Debug)]
 pub struct Enum {
-
+    // TODO (and enum cases?)
 }
 
 #[derive(Debug)]
 pub struct Struct {
-
+    // TODO
 }
 
 #[derive(Debug)]

@@ -168,6 +168,25 @@ mod test {
     use crate::parsing::dne_parser::*;
 
     #[test]
+    fn should_type_check_param_with_return() {
+        let x = r#"fun x(y : Int) -> Int { y }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_fail_type_check_param_with_return() {
+        let x = r#"fun x(y : Bool) -> Int { y }"#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
     fn should_fail_type_check_lit_with_return() {
         let x = r#"fun x() -> Int { true }"#;
         let y = parse(x).unwrap();

@@ -24,6 +24,23 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError { }
 
 #[derive(Debug)]
+pub enum Top {
+    Fun(Fun),
+    Enum(Enum),
+    Struct(Struct),
+}
+
+#[derive(Debug)]
+pub struct Enum {
+
+}
+
+#[derive(Debug)]
+pub struct Struct {
+
+}
+
+#[derive(Debug)]
 pub struct Fun {
     pub name: Rc<str>, 
     pub type_params: Vec<Rc<str>>,

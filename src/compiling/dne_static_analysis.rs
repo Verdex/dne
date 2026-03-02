@@ -15,7 +15,9 @@ pub enum StaticError {
     UnknownVar(Rc<str>),
     // TODO dup type names
     // TODO type name collides with built in
+    // TODO dup type names
     // TODO type parameter shadows outer type (maybe a problem?)
+    // TODO type names collide with function names (and/or builtins)
 }
 
 pub struct FunTypeInfo {
@@ -132,6 +134,15 @@ fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
 
 struct Env { 
     global_funs: HashMap<Rc<str>, FunTypeInfo>,
+}
+
+impl Env {
+    pub fn get_fun(&self, name : &Rc<str>) -> Result<&FunTypeInfo, StaticError> {
+        match self.global_funs.get(name) {
+            Some(v) => Ok(v),
+            None => todo!(), // TODO fun name does not exist
+        }
+    }
 }
 
 struct Checker {

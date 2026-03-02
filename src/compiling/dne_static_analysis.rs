@@ -78,7 +78,9 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
     for def in &target.defs {
         match def {
             Def::Let { name, ttype: None, expr } => {
-                todo!()
+                checker.infer_var(name);
+                let term = checker.get_type(name)?;
+                check_expr(&mut checker, expr, &term)?;
             },
             Def::Let { name, ttype: Some(t), expr } => {
                 let term = type_to_term(&t, &HashSet::new());
@@ -161,13 +163,15 @@ impl Env {
 struct Checker {
     unifier : Unify,
     vars : HashMap<Rc<str>, Rc<Term>>,
+    gen_value : usize,
 }
 
 impl Checker {
-    pub fn new() -> Self { Checker { unifier: Unify::new(), vars: HashMap::new() } }
+    pub fn new() -> Self { Checker { unifier: Unify::new(), vars: HashMap::new(), gen_value: 0 } }
 
     pub fn infer_var(&mut self, var : &Rc<str>) {
-        todo!()
+        let x = self.gensym();
+        self.vars.insert(Rc::clone(var), u_var(&x));
     }
 
     pub fn type_var(&mut self, var : &Rc<str>, t : &Rc<Term>) {
@@ -183,6 +187,11 @@ impl Checker {
 
     pub fn unify_types(&mut self, a : &Rc<Term>, b : &Rc<Term>) -> bool {
         self.unifier.unify(a, b)
+    }
+
+    fn gensym(&mut self) -> Rc<str> {
+        self.gen_value += 1;
+        format!("gen_{}", self.gen_value).into()
     }
 }
 
@@ -325,6 +334,37 @@ mod test {
             fun x() -> Bool { 
                 let y : Int = 0; 
                 y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
+    fn should_type_check_with_inferred_var() {
+        let x = r#"
+            fun x() -> Bool { 
+                let y = true; 
+                let z = y; 
+                z
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+    
+    #[test]
+    fn should_fail_type_check_with_inferred_var() {
+        let x = r#"
+            fun x() -> Int { 
+                let y = true; 
+                let z = y; 
+                z
             }
         "#;
         let y = parse(x).unwrap();

@@ -76,6 +76,18 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
         checker.type_var(n, &type_to_term(&t, &HashSet::new()));
     }
 
+    for def in &target.defs {
+        match def {
+            Def::Let { name, ttype: None, expr } => {
+                todo!()
+            },
+            Def::Let { name, ttype: Some(t), expr } => {
+                todo!()
+            },
+            Def::Fun(x) => todo!(),
+        }
+    }
+
     check_expr(&mut checker, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))
 
     // TODO build up hashmap with variable to type (which i think is only internal to expr type)

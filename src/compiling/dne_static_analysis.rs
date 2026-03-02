@@ -7,8 +7,6 @@ use crate::parsing::dne_parser::*;
 use super::unifier::{Term, Unify};
 
 
-type TypeMap<'a> = HashMap<Rc<str>, FunTypeInfo<'a>>;
-
 #[derive(Debug)]
 pub enum StaticError {
     DupFunName(Rc<str>), 
@@ -20,20 +18,20 @@ pub enum StaticError {
     // TODO type parameter shadows outer type (maybe a problem?)
 }
 
-pub struct FunTypeInfo<'a> {
+pub struct FunTypeInfo {
     name : Rc<str>,
-    return_type : &'a Type,
-    param_types : Vec<&'a Type>,
-    type_params : HashSet<Rc<str>>,
+    return_type : Type,
+    param_types : Vec<Type>,
+    type_params : Vec<Rc<str>>,
 }
 
-impl<'a> From<&'a Fun> for FunTypeInfo<'a> {
-    fn from(item: &'a Fun) -> Self {
+impl From<&Fun> for FunTypeInfo {
+    fn from(item: &Fun) -> Self {
         FunTypeInfo { 
             name: Rc::clone(&item.name),
-            param_types: item.params.iter().map(|(_, t)| t).collect(),
-            return_type: &item.return_type,
-            type_params: HashSet::from_iter(item.type_params.iter().map(|x| Rc::clone(x)))
+            param_types: item.params.iter().map(|(_, x)| x.clone()).collect(),
+            return_type: item.return_type.clone(),
+            type_params: item.type_params.clone(),
         }
     }
 }
@@ -58,14 +56,16 @@ fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
 
     fn f(x : Result<(), Vec<StaticError>>) -> Vec<StaticError> { match x { Ok(_) => vec![], Err(x) => x } }
 
-    let fun_types : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
+    let global_funs : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
         built_ins.into_iter().map(|x| (Rc::clone(&x.name), x))
         .chain(program.iter().map(|x| (Rc::clone(&x.name), x.into()))));
 
-    program.iter().map(|x| check_fun(x, &fun_types)).flat_map(f).collect()
+    let mut env = Env { global_funs };
+
+    program.iter().map(|x| check_fun(x, &mut env)).flat_map(f).collect()
 }
 
-fn check_fun(target : &Fun, global_fun_types : &TypeMap) -> Result<(), Vec<StaticError>> {
+fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
 
     
     let mut checker = Checker::new();
@@ -128,6 +128,10 @@ fn dup_fun(mut x : Vec<Rc<str>>) -> Vec<Rc<str>> {
 fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
     if x.len() == 0 { Ok(()) }
     else { Err(x) }
+}
+
+struct Env { 
+    global_funs: HashMap<Rc<str>, FunTypeInfo>,
 }
 
 struct Checker {

@@ -69,7 +69,6 @@ fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
 
 fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
 
-    
     let mut checker = Checker::new();
 
     for (n, t) in &target.params {
@@ -82,7 +81,9 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
                 todo!()
             },
             Def::Let { name, ttype: Some(t), expr } => {
-                todo!()
+                let term = type_to_term(&t, &HashSet::new());
+                check_expr(&mut checker, expr, &term)?;
+                checker.type_var(name, &term);
             },
             Def::Fun(x) => todo!(),
         }
@@ -256,4 +257,81 @@ mod test {
         assert!(z.is_ok());
     }
 
+    #[test]
+    fn should_type_check_let_with_lit() {
+        let x = r#"
+            fun x() -> Bool { 
+                let y : Bool = true; 
+                y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_fail_type_check_let_with_lit() {
+        let x = r#"
+            fun x() -> Bool { 
+                let y : Bool = 0; 
+                y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
+    fn should_fail_type_check_let_with_param() {
+        let x = r#"
+            fun x(z : Int) -> Bool { 
+                let y : Bool = z; 
+                y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
+    fn should_fail_type_check_let_with_var() {
+        let x = r#"
+            fun x() -> Int { 
+                let y : Bool = true; 
+                let z : Int = y; 
+                y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
+    fn should_fail_type_check_return_with_var() {
+        let x = r#"
+            fun x() -> Bool { 
+                let y : Int = 0; 
+                y
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+        let z = z.unwrap_err();
+        assert!(z.len() == 1);
+        assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
 }

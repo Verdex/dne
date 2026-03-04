@@ -84,6 +84,9 @@ pub enum Lit {
     String(Rc<str>),
 }
 
+// TODO prioritize cons, enum, struct, and match
+// Then get pattern, foreach_result, and pat_locals
+
 #[derive(Debug)]
 pub enum Expr { 
     Lit(Lit), 

@@ -13,23 +13,33 @@ pub enum StaticError {
     BuiltInCollision(Rc<str>),
     ExprIllTyped { expr: Rc<str>, found_type : Rc<str>, expected_type : Rc<str> },
     UnknownVar(Rc<str>),
+    UnknownFun(Rc<str>),
     // TODO dup type names
     // TODO type name collides with built in
     // TODO dup type names
     // TODO type parameter shadows outer type (maybe a problem?)
     // TODO type names collide with function names (and/or builtins)
+    
+    // TODO FunStaticError { name: Rc<str>, error : FunStaticError },
 }
 
-pub struct FunTypeInfo {
+/*
+#[derive(Debug)]
+pub enum FunStaticError {
+
+}
+*/
+
+pub struct InvokeTypeInfo {
     name : Rc<str>,
     return_type : Type,
     param_types : Vec<Type>,
     type_params : Vec<Rc<str>>,
 }
 
-impl From<&Fun> for FunTypeInfo {
+impl From<&Fun> for InvokeTypeInfo {
     fn from(item: &Fun) -> Self {
-        FunTypeInfo { 
+        InvokeTypeInfo { 
             name: Rc::clone(&item.name),
             param_types: item.params.iter().map(|(_, x)| x.clone()).collect(),
             return_type: item.return_type.clone(),
@@ -39,7 +49,7 @@ impl From<&Fun> for FunTypeInfo {
 }
 
 // TODO need to augment results such that the fun name is attached to each group
-pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<(), Vec<StaticError>> {
+pub fn static_check(program : &[Fun], built_ins : Vec<InvokeTypeInfo>) -> Result<(), Vec<StaticError>> {
     let mut fun_names = program.iter().map(|x| Rc::clone(&x.name)).collect::<Vec<_>>();
     check( dup_fun( fun_names.clone() ).into_iter().map(StaticError::DupFunName).collect() )?;
 
@@ -54,11 +64,11 @@ pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<()
     Ok(())
 }
 
-fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
+fn types(program : &[Fun], built_ins : Vec<InvokeTypeInfo>) -> Vec<StaticError> {
 
     fn f(x : Result<(), Vec<StaticError>>) -> Vec<StaticError> { match x { Ok(_) => vec![], Err(x) => x } }
 
-    let global_funs : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
+    let global_funs : HashMap<Rc<str>, InvokeTypeInfo> = HashMap::from_iter(
         built_ins.into_iter().map(|x| (Rc::clone(&x.name), x))
         .chain(program.iter().map(|x| (Rc::clone(&x.name), x.into()))));
 
@@ -99,9 +109,7 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
     // TODO also note that each time a function (which has already been called) with a type var is called it will need a fresh variable
 
 
-    // TODO add lets and local funs to ts
-
-    // TODO compute expr and make sure its valid and matches return type
+    // TODO  local funs to ts
 
 }
 
@@ -112,6 +120,7 @@ fn check_expr(checker : &mut Checker, expr : &Expr, expected_type : &Rc<Term>) -
         Expr::Lit(Lit::Bool(_)) => u_atom(&"Bool".into()),
         Expr::Lit(Lit::String(_)) => u_atom(&"String".into()),
         Expr::Var(x) => checker.get_type(x)?,
+        Expr::CallOrCons { name, params } => { todo!() },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {
@@ -148,11 +157,11 @@ fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
 }
 
 struct Env { 
-    global_funs: HashMap<Rc<str>, FunTypeInfo>,
+    global_funs: HashMap<Rc<str>, InvokeTypeInfo>,
 }
 
 impl Env {
-    pub fn get_fun(&self, name : &Rc<str>) -> Result<&FunTypeInfo, StaticError> {
+    pub fn get_invoke_info(&self, name : &Rc<str>) -> Result<&InvokeTypeInfo, StaticError> {
         match self.global_funs.get(name) {
             Some(v) => Ok(v),
             None => todo!(), // TODO fun name does not exist

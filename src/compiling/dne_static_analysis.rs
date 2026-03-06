@@ -90,18 +90,18 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
             Def::Let { name, ttype: None, expr } => {
                 checker.infer_var(name);
                 let term = checker.get_type(name)?;
-                check_expr(&mut checker, expr, &term)?;
+                check_expr(&mut checker, env, expr, &term)?;
             },
             Def::Let { name, ttype: Some(t), expr } => {
                 let term = type_to_term(&t, &HashSet::new());
-                check_expr(&mut checker, expr, &term)?;
+                check_expr(&mut checker, env, expr, &term)?;
                 checker.type_var(name, &term);
             },
             Def::Fun(x) => todo!(),
         }
     }
 
-    check_expr(&mut checker, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))
+    check_expr(&mut checker, env, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))
 
     // TODO build up hashmap with variable to type (which i think is only internal to expr type)
     // Note target's param types don't really matter because they can be considered as some type X
@@ -113,14 +113,14 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
 
 }
 
-fn check_expr(checker : &mut Checker, expr : &Expr, expected_type : &Rc<Term>) -> Result<(), Vec<StaticError>> { 
+fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : &Rc<Term>) -> Result<(), Vec<StaticError>> { 
     let t = match expr {
         Expr::Lit(Lit::Int(_)) => u_atom(&"Int".into()),
         Expr::Lit(Lit::Float(_)) => u_atom(&"Float".into()),
         Expr::Lit(Lit::Bool(_)) => u_atom(&"Bool".into()),
         Expr::Lit(Lit::String(_)) => u_atom(&"String".into()),
         Expr::Var(x) => checker.get_type(x)?,
-        Expr::CallOrCons { name, params } => { todo!() },
+        Expr::Call { name, params } => { todo!() },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {

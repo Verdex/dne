@@ -90,7 +90,8 @@ pub enum Lit {
 #[derive(Debug)]
 pub enum Expr { 
     Lit(Lit), 
-    CallOrCons { name : Rc<str>, params : Vec<Expr> },
+    Call { name : Rc<str>, params : Vec<Expr> },
+    Cons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
     Var(Rc<str>),
     // TODO lambda
     // list constructor
@@ -285,7 +286,19 @@ fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, Parse
             params.push(parse_expr(input)?);
             input.expect(|x| x.eq(&Token::Comma))?;
         }
-        Ok(Expr::CallOrCons { name, params } )
+        Ok(Expr::Call { name, params } )
+    }
+    else if input.check(|x| x.eq(&Token::Colon))? {
+        let mut params = vec![];
+        input.expect(|x| x.eq(&Token::Colon))?;
+        let case = expect_sym(input)?;
+        if input.check(|x| x.eq(&Token::LParen))? {
+            while !input.check(|x| x.eq(&Token::RParen))? {
+                params.push(parse_expr(input)?);
+                input.expect(|x| x.eq(&Token::Comma))?;
+            }
+        }
+        Ok(Expr::Cons { ttype: name, case, params } )
     }
     else {
         Ok(Expr::Var(name))

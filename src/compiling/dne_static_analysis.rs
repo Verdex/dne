@@ -30,16 +30,16 @@ pub enum FunStaticError {
 }
 */
 
-pub struct InvokeTypeInfo {
+pub struct FunTypeInfo {
     name : Rc<str>,
     return_type : Type,
     param_types : Vec<Type>,
     type_params : Vec<Rc<str>>,
 }
 
-impl From<&Fun> for InvokeTypeInfo {
+impl From<&Fun> for FunTypeInfo {
     fn from(item: &Fun) -> Self {
-        InvokeTypeInfo { 
+        FunTypeInfo { 
             name: Rc::clone(&item.name),
             param_types: item.params.iter().map(|(_, x)| x.clone()).collect(),
             return_type: item.return_type.clone(),
@@ -49,7 +49,7 @@ impl From<&Fun> for InvokeTypeInfo {
 }
 
 // TODO need to augment results such that the fun name is attached to each group
-pub fn static_check(program : &[Fun], built_ins : Vec<InvokeTypeInfo>) -> Result<(), Vec<StaticError>> {
+pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<(), Vec<StaticError>> {
     let mut fun_names = program.iter().map(|x| Rc::clone(&x.name)).collect::<Vec<_>>();
     check( dup_fun( fun_names.clone() ).into_iter().map(StaticError::DupFunName).collect() )?;
 
@@ -64,11 +64,11 @@ pub fn static_check(program : &[Fun], built_ins : Vec<InvokeTypeInfo>) -> Result
     Ok(())
 }
 
-fn types(program : &[Fun], built_ins : Vec<InvokeTypeInfo>) -> Vec<StaticError> {
+fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
 
     fn f(x : Result<(), Vec<StaticError>>) -> Vec<StaticError> { match x { Ok(_) => vec![], Err(x) => x } }
 
-    let global_funs : HashMap<Rc<str>, InvokeTypeInfo> = HashMap::from_iter(
+    let global_funs : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
         built_ins.into_iter().map(|x| (Rc::clone(&x.name), x))
         .chain(program.iter().map(|x| (Rc::clone(&x.name), x.into()))));
 
@@ -157,11 +157,11 @@ fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
 }
 
 struct Env { 
-    global_funs: HashMap<Rc<str>, InvokeTypeInfo>,
+    global_funs: HashMap<Rc<str>, FunTypeInfo>,
 }
 
 impl Env {
-    pub fn get_invoke_info(&self, name : &Rc<str>) -> Result<&InvokeTypeInfo, StaticError> {
+    pub fn get_fun_info(&self, name : &Rc<str>) -> Result<&FunTypeInfo, StaticError> {
         match self.global_funs.get(name) {
             Some(v) => Ok(v),
             None => todo!(), // TODO fun name does not exist

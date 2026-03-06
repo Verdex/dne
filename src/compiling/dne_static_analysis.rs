@@ -120,7 +120,13 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
         Expr::Lit(Lit::Bool(_)) => u_atom(&"Bool".into()),
         Expr::Lit(Lit::String(_)) => u_atom(&"String".into()),
         Expr::Var(x) => checker.get_type(x)?,
-        Expr::Call { name, params } => { todo!() },
+        Expr::Call { name, params } => { 
+            let info = env.get_fun_info(&name)?;
+            let type_vars : HashSet<Rc<str>> = HashSet::from_iter(info.type_params.iter().map(Rc::clone));
+
+            // TODO check each param against fun info
+            todo!()
+        },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {
@@ -161,7 +167,7 @@ struct Env {
 }
 
 impl Env {
-    pub fn get_fun_info(&self, name : &Rc<str>) -> Result<&FunTypeInfo, StaticError> {
+    pub fn get_fun_info(&self, name : &Rc<str>) -> Result<&FunTypeInfo, Vec<StaticError>> {
         match self.global_funs.get(name) {
             Some(v) => Ok(v),
             None => todo!(), // TODO fun name does not exist

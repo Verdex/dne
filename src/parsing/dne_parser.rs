@@ -281,21 +281,29 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 
 fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, ParseError> {
     if input.check(|x| x.eq(&Token::LParen))? {
-        let mut params = vec![];
-        while !input.check(|x| x.eq(&Token::RParen))? {
-            params.push(parse_expr(input)?);
-            input.expect(|x| x.eq(&Token::Comma))?;
+        if input.check(|x| x.eq(&Token::RParen))? {
+            Ok(Expr::Call { name, params: vec![] } )
         }
-        Ok(Expr::Call { name, params } )
+        else {
+            let mut params = vec![parse_expr(input)?];
+            loop {
+                if input.check(|x| x.eq(&Token::RParen))? {
+                    break Ok(Expr::Call { name, params } );
+                }
+                input.expect(|x| x.eq(&Token::Comma))?;
+                params.push(parse_expr(input)?);
+            }
+        }
     }
     else if input.check(|x| x.eq(&Token::Colon))? {
         let mut params = vec![];
         input.expect(|x| x.eq(&Token::Colon))?;
         let case = expect_sym(input)?;
         if input.check(|x| x.eq(&Token::LParen))? {
+            params.push(parse_expr(input)?);
             while !input.check(|x| x.eq(&Token::RParen))? {
-                params.push(parse_expr(input)?);
                 input.expect(|x| x.eq(&Token::Comma))?;
+                params.push(parse_expr(input)?);
             }
         }
         Ok(Expr::Cons { ttype: name, case, params } )

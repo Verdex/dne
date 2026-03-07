@@ -124,8 +124,11 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
             let info = env.get_fun_info(&name)?;
             let type_vars : HashSet<Rc<str>> = HashSet::from_iter(info.type_params.iter().map(Rc::clone));
 
-            // TODO check each param against fun info
-            todo!()
+            check( params.iter().zip(info.param_types.iter())
+                .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
+                .flat_map(|x| match x { Err(x) => x, _ => vec![] }).collect() )?;
+            
+            type_to_term( &info.return_type, &type_vars )
         },
         _ => todo!(),
     };
@@ -388,5 +391,20 @@ mod test {
         let z = z.unwrap_err();
         assert!(z.len() == 1);
         assert!(matches!(z[0], StaticError::ExprIllTyped { .. }));
+    }
+
+    #[test]
+    fn should_type_check_call_with_inferred_fun_info() {
+        let x = r#"
+            fun y<T>( x : T ) -> T { x }
+
+            fun x() -> Bool { 
+                let z = true;
+                y( z )
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
     }
 }

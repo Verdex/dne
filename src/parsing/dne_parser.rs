@@ -130,7 +130,42 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
 }
 
 fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
-    todo!()
+    let name = expect_sym(input)?;
+    let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
+        let mut ret = vec![expect_sym(input)?];
+        loop {
+            if input.check(|x| x.eq(&Token::RAngle))? {
+                break ret;
+            }
+            input.expect(|x| x.eq(&Token::Comma))?; 
+            ret.push(expect_sym(input)?);
+        }
+    }
+    else {
+        vec![]
+    };
+    input.expect(|x| x.eq(&Token::LCurl))?;
+    let mut fields = vec![];
+    if !input.check(|x| x.eq(&Token::RCurl))? {
+        loop {
+            let field = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::Colon))?;
+            let ttype = parse_type(input)?;
+            fields.push((field, ttype));
+
+            if input.check(|x| x.eq(&Token::RCurl))? {
+                break;
+            }
+            else if input.check(|x| x.eq(&Token::Comma))? {
+                continue;
+            }
+            else {
+                let (s, e) = input.current()?;
+                return Err(ParseError::Fatal(s, e));
+            }
+        }
+    }
+    Ok(Struct { name, type_params, fields })
 }
 
 fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {

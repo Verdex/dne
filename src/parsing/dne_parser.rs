@@ -92,10 +92,10 @@ pub enum Expr {
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Expr> },
     Cons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
+    // TODO need struct cons
     Var(Rc<str>),
-    // TODO lambda
+    // TODO
     // list constructor
-    // tuple constructor
     // match
 }
 
@@ -109,12 +109,17 @@ pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
     parse_tops(&mut input)
 }
 
-// TODO also parse struct and enum
 fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
     let mut ret = vec![];
     while !input.empty() {
         if input.check(|x| x.eq(&Token::Fun))? {
             ret.push(Top::Fun(parse_fun(input)?));
+        }
+        else if input.check(|x| x.eq(&Token::Enum))? {
+            ret.push(Top::Enum(parse_enum(input)?));
+        }
+        else if input.check(|x| x.eq(&Token::Struct))? {
+            ret.push(Top::Struct(parse_struct(input)?));
         }
         else {
             let (s, e) = input.current()?;
@@ -122,6 +127,14 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
         }
     }
     Ok(ret)
+}
+
+fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
+    todo!()
+}
+
+fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
+    todo!()
 }
 
 fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {

@@ -443,4 +443,23 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
 mod test {
     use super::*;
 
+    #[test]
+    fn should_parse_top_level_type_defs() {
+        let input = r#"
+            struct X { }
+            struct Y { a : Int }
+            struct Z<T> { a : T }
+            struct W<T, S> { a : T, b : S }
+
+            enum A { }
+            enum B { L }
+            enum C { L, M }
+            enum D { L(Int), M, N(Int, Float) }
+            enum E<T> { L(T) }
+            enum E<T, S> { L(T, S) }
+        "#;
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 10);
+    }
 }

@@ -99,22 +99,22 @@ pub enum Expr {
     // match
 }
 
-pub fn parse(input : &str) -> Result<Vec<Fun>, ParseError> {
+pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {
     let input = match dne::lex(input) {
         Err(i) => { return Err(ParseError::Lex(i)); },
         Ok(ls) => ls,
     };
     let mut input = Input::new(input, ParseError::Eof, |s, e| ParseError::Fatal(s, e));
 
-    parse_funs(&mut input)
+    parse_tops(&mut input)
 }
 
 // TODO also parse struct and enum
-fn parse_funs(input : &mut Input) -> Result<Vec<Fun>, ParseError> {
+fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
     let mut ret = vec![];
     while !input.empty() {
         if input.check(|x| x.eq(&Token::Fun))? {
-            ret.push(parse_fun(input)?);
+            ret.push(Top::Fun(parse_fun(input)?));
         }
         else {
             let (s, e) = input.current()?;

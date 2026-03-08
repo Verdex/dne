@@ -49,8 +49,10 @@ impl From<&Fun> for FunTypeInfo {
 }
 
 // TODO need to augment results such that the fun name is attached to each group
-pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<(), Vec<StaticError>> {
-    let mut fun_names = program.iter().map(|x| Rc::clone(&x.name)).collect::<Vec<_>>();
+pub fn static_check(program : &[Top], built_ins : Vec<FunTypeInfo>) -> Result<(), Vec<StaticError>> {
+    let mut fun_names = program.iter()
+                               .filter_map(|x| match x { Top::Fun(x) => Some(Rc::clone(&x.name)), _ => None })
+                               .collect::<Vec<_>>();
     check( dup_fun( fun_names.clone() ).into_iter().map(StaticError::DupFunName).collect() )?;
 
     let mut built_in_names = built_ins.iter().map(|x| Rc::clone(&x.name)).collect::<Vec<_>>();
@@ -64,17 +66,21 @@ pub fn static_check(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Result<()
     Ok(())
 }
 
-fn types(program : &[Fun], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
+fn types(program : &[Top], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
 
     fn f(x : Result<(), Vec<StaticError>>) -> Vec<StaticError> { match x { Ok(_) => vec![], Err(x) => x } }
 
+    let funs = program.iter()
+                      .filter_map(|x| match x { Top::Fun(x) => Some(x), _ => None } )
+                      .collect::<Vec<_>>();
+
     let global_funs : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
         built_ins.into_iter().map(|x| (Rc::clone(&x.name), x))
-        .chain(program.iter().map(|x| (Rc::clone(&x.name), x.into()))));
+        .chain(funs.iter().map(|x| (Rc::clone(&x.name), (*x).into()))));
 
     let mut env = Env { global_funs };
 
-    program.iter().map(|x| check_fun(x, &mut env)).flat_map(f).collect()
+    funs.iter().map(|x| check_fun(x, &mut env)).flat_map(f).collect()
 }
 
 fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {

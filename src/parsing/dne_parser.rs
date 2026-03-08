@@ -169,7 +169,54 @@ fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
 }
 
 fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
-    todo!()
+    let name = expect_sym(input)?;
+    let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
+        let mut ret = vec![expect_sym(input)?];
+        loop {
+            if input.check(|x| x.eq(&Token::RAngle))? {
+                break ret;
+            }
+            input.expect(|x| x.eq(&Token::Comma))?; 
+            ret.push(expect_sym(input)?);
+        }
+    }
+    else {
+        vec![]
+    };
+    input.expect(|x| x.eq(&Token::LCurl))?;
+    let mut cases = vec![];
+    if !input.check(|x| x.eq(&Token::RCurl))? {
+        loop {
+            let enum_case = parse_enum_case(input)?;
+
+            if input.check(|x| x.eq(&Token::RCurl))? {
+                break;
+            }
+            else if input.check(|x| x.eq(&Token::Comma))? {
+                continue;
+            }
+            else {
+                let (s, e) = input.current()?;
+                return Err(ParseError::Fatal(s, e));
+            }
+        }
+    }
+    Ok(Enum { name, type_params, cases })
+}
+
+fn parse_enum_case(input : &mut Input) -> Result<EnumCase, ParseError> {
+    let name = expect_sym(input)?;
+    if input.check(|x| x.eq(&Token::LParen))? {
+        let mut params = vec![parse_type(input)?];
+        while !input.check(|x| x.eq(&Token::RParen))? {
+            input.expect(|x| x.eq(&Token::Comma))?;
+            params.push(parse_type(input)?);
+        }
+        Ok(EnumCase { name, params })
+    }
+    else {
+        Ok(EnumCase { name, params: vec![] })
+    }
 }
 
 fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {

@@ -73,12 +73,18 @@ fn types(program : &[Top], built_ins : Vec<FunTypeInfo>) -> Vec<StaticError> {
     let funs = program.iter()
                       .filter_map(|x| match x { Top::Fun(x) => Some(x), _ => None } )
                       .collect::<Vec<_>>();
+    let enums = HashMap::from_iter(
+        program.iter()
+               .filter_map(|x| match x { Top::Enum(x) => Some((Rc::clone(&x.name), x)), _ => None } ));
+    let structs = HashMap::from_iter(
+        program.iter()
+               .filter_map(|x| match x { Top::Struct(x) => Some((Rc::clone(&x.name), x)), _ => None } ));
 
     let global_funs : HashMap<Rc<str>, FunTypeInfo> = HashMap::from_iter(
         built_ins.into_iter().map(|x| (Rc::clone(&x.name), x))
         .chain(funs.iter().map(|x| (Rc::clone(&x.name), (*x).into()))));
 
-    let mut env = Env { global_funs };
+    let mut env = Env { global_funs, structs, enums };
 
     funs.iter().map(|x| check_fun(x, &mut env)).flat_map(f).collect()
 }
@@ -171,11 +177,13 @@ fn check(x : Vec<StaticError>) -> Result<(), Vec<StaticError>> {
     else { Err(x) }
 }
 
-struct Env { 
+struct Env<'a> { 
     global_funs: HashMap<Rc<str>, FunTypeInfo>,
+    structs : HashMap<Rc<str>, &'a Struct>,
+    enums : HashMap<Rc<str>, &'a Enum>,
 }
 
-impl Env {
+impl<'a> Env<'a> {
     pub fn get_fun_info(&self, name : &Rc<str>) -> Result<&FunTypeInfo, Vec<StaticError>> {
         match self.global_funs.get(name) {
             Some(v) => Ok(v),

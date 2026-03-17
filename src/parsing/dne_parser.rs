@@ -92,7 +92,7 @@ pub enum Expr {
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Expr> },
     CaseCons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
-    // TODO need struct cons
+    StructCons { ttype : Rc<str>, params : Vec<(Rc<str>, Expr)> },
     Var(Rc<str>),
     // TODO
     // list constructor
@@ -402,6 +402,16 @@ fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, Parse
             }
         }
         Ok(Expr::CaseCons { ttype: name, case, params } )
+    }
+    else if input.check(|x| x.eq(&Token::LCurl))? {
+        let mut params = vec![];
+        while !input.check(|x| x.eq(&Token::RCurl))? {
+            let field = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::Colon))?;
+            let expr = parse_expr(input)?;
+            params.push((field, expr));
+        }
+        Ok(Expr::StructCons { ttype: name, params })
     }
     else {
         Ok(Expr::Var(name))

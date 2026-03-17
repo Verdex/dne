@@ -91,7 +91,7 @@ pub enum Lit {
 pub enum Expr { 
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Expr> },
-    Cons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
+    CaseCons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
     // TODO need struct cons
     Var(Rc<str>),
     // TODO
@@ -401,7 +401,7 @@ fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, Parse
                 params.push(parse_expr(input)?);
             }
         }
-        Ok(Expr::Cons { ttype: name, case, params } )
+        Ok(Expr::CaseCons { ttype: name, case, params } )
     }
     else {
         Ok(Expr::Var(name))

@@ -140,7 +140,19 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
                 .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
                 .flat_map(|x| match x { Err(x) => x, _ => vec![] }).collect() )?;
             
-            type_to_term( &info.return_type, &type_vars )
+            // TODO need to make sure inferred types and type vars is correct
+            type_to_term( &info.return_type, &type_vars ) 
+        },
+        Expr::CaseCons { ttype, case, params } => {
+            let info = env.get_case_info(&ttype, &case)?;   
+            let type_vars : HashSet<Rc<str>> = HashSet::from_iter(info.0.iter().map(Rc::clone));
+
+            check( params.iter().zip(info.1.iter())
+                .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
+                .flat_map(|x| match x { Err(x) => x, _ => vec![] } ).collect() )?;
+
+            // TODO need to make sure inferred types and type vars is correct
+            u_data(ttype, info.0.iter().map(|x| u_var(x)).collect())
         },
         _ => todo!(),
     };
@@ -188,6 +200,18 @@ impl<'a> Env<'a> {
         match self.global_funs.get(name) {
             Some(v) => Ok(v),
             None => todo!(), // TODO fun name does not exist
+        }
+    }
+
+    pub fn get_case_info(&self, enum_name: &Rc<str>, case: &Rc<str>) -> Result<(&[Rc<str>], &[Type]), Vec<StaticError>> {
+        match self.enums.get(enum_name) {
+            Some(x) => {
+                match x.cases.iter().find(|c| c.name == *case) {
+                    Some(case) => Ok((&x.type_params[..], &case.params[..])),
+                    None => todo!(),
+                }
+            },
+            None => todo!(), 
         }
     }
 }

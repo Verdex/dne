@@ -187,7 +187,7 @@ fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
     let mut cases = vec![];
     if !input.check(|x| x.eq(&Token::RCurl))? {
         loop {
-            let enum_case = parse_enum_case(input)?;
+            cases.push(parse_enum_case(input)?);
 
             if input.check(|x| x.eq(&Token::RCurl))? {
                 break;

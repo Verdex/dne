@@ -1,6 +1,6 @@
 
 use std::rc::Rc;
-use std::collections::{ HashSet, HashMap };
+use std::collections::HashMap;
 
 use crate::parsing::dne_parser::*;
 
@@ -94,7 +94,7 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
     let mut checker = Checker::new();
 
     for (n, t) in &target.params {
-        checker.type_var(n, &type_to_term(&t, &HashSet::new()));
+        checker.type_var(n, &type_to_term(&t, &HashMap::new()));
     }
 
     for def in &target.defs {
@@ -105,7 +105,7 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
                 check_expr(&mut checker, env, expr, &term)?;
             },
             Def::Let { name, ttype: Some(t), expr } => {
-                let term = type_to_term(&t, &HashSet::new());
+                let term = type_to_term(&t, &HashMap::new());
                 check_expr(&mut checker, env, expr, &term)?;
                 checker.type_var(name, &term);
             },
@@ -113,7 +113,7 @@ fn check_fun(target : &Fun, env : &mut Env) -> Result<(), Vec<StaticError>> {
         }
     }
 
-    check_expr(&mut checker, env, &target.expr, &type_to_term(&target.return_type, &HashSet::new()))
+    check_expr(&mut checker, env, &target.expr, &type_to_term(&target.return_type, &HashMap::new()))
 
     // TODO build up hashmap with variable to type (which i think is only internal to expr type)
     // Note target's param types don't really matter because they can be considered as some type X
@@ -134,7 +134,7 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
         Expr::Var(x) => checker.get_type(x)?,
         Expr::Call { name, params } => { 
             let info = env.get_fun_info(&name)?;
-            let type_vars : HashSet<Rc<str>> = HashSet::from_iter(info.type_params.iter().map(Rc::clone));
+            let type_vars : HashMap<Rc<str>, Rc<str>> = HashMap::from_iter(info.type_params.iter().map(|x| (Rc::clone(x), checker.gensym())));
 
             check( params.iter().zip(info.param_types.iter())
                 .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
@@ -145,7 +145,7 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
         },
         Expr::CaseCons { ttype, case, params } => {
             let info = env.get_case_info(&ttype, &case)?;   
-            let type_vars : HashSet<Rc<str>> = HashSet::from_iter(info.0.iter().map(Rc::clone));
+            let type_vars : HashMap<Rc<str>, Rc<str>> = HashMap::from_iter(info.0.iter().map(|x| (Rc::clone(x), checker.gensym())));
 
             check( params.iter().zip(info.1.iter())
                 .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
@@ -168,9 +168,9 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
     }
 }
 
-fn type_to_term(t : &Type, type_vars : &HashSet<Rc<str>>) -> Rc<Term> {
-    if type_vars.contains(&t.name) && t.params.len() == 0 {
-        u_var(&t.name)
+fn type_to_term(t : &Type, type_vars : &HashMap<Rc<str>, Rc<str>>) -> Rc<Term> {
+    if let Some(x) = type_vars.get(&t.name) && t.params.len() == 0 {
+        u_var(&x)
     }
     else {
         u_data(&t.name, t.params.iter().map(|x| type_to_term(x, type_vars)).collect())
@@ -245,7 +245,7 @@ impl Checker {
         self.unifier.unify(a, b)
     }
 
-    fn gensym(&mut self) -> Rc<str> {
+    pub fn gensym(&mut self) -> Rc<str> {
         self.gen_value += 1;
         format!("gen_{}", self.gen_value).into()
     }

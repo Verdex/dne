@@ -263,6 +263,55 @@ mod test {
     use crate::parsing::dne_parser::*;
 
     #[test]
+    fn should_type_check_infer_data_and_infer_fun_with_inner_infer_data() {
+        let x = r#"
+            enum W<T> { R(T) }
+            enum Z<T, S> { A(W<T>), B(S) }
+
+            fun y<T>( x : T ) -> T { x }
+            fun x() -> Z<Bool, Bool> { 
+                let h = Z::A(W::R(y(false)));
+                y( h )
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
+    fn should_type_fail_check_infer_data_and_infer_fun() {
+        let x = r#"
+            enum Z<T, S> { A(T), B(S) }
+            fun y<T>( x : T ) -> T { x }
+
+            fun x() -> Z<Int, Bool> { 
+                let h = Z::A(true);
+                y( h )
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_err());
+    }
+
+    #[test]
+    fn should_type_check_infer_data_and_infer_fun() {
+        let x = r#"
+            enum Z<T, S> { A(T), B(S) }
+            fun y<T>( x : T ) -> T { x }
+
+            fun x() -> Z<Int, Bool> { 
+                let z = Z::A(5);
+                y( z )
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
     fn should_type_check_param_with_return() {
         let x = r#"fun x(y : Int) -> Int { y }"#;
         let y = parse(x).unwrap();

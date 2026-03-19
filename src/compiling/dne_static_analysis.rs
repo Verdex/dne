@@ -140,7 +140,6 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
                 .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
                 .flat_map(|x| match x { Err(x) => x, _ => vec![] }).collect() )?;
             
-            // TODO need to make sure inferred types and type vars is correct
             type_to_term( &info.return_type, &type_vars ) 
         },
         Expr::CaseCons { ttype, case, params } => {
@@ -151,7 +150,6 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
                 .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
                 .flat_map(|x| match x { Err(x) => x, _ => vec![] } ).collect() )?;
 
-            // TODO need to make sure inferred types and type vars is correct
             let w = Type { name: Rc::clone(ttype), params: info.0.iter().map(|x| Type { name: Rc::clone(x), params: vec![] }).collect() };
             type_to_term(&w, &type_vars)
         },

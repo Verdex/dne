@@ -152,14 +152,16 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
                 .flat_map(|x| match x { Err(x) => x, _ => vec![] } ).collect() )?;
 
             // TODO need to make sure inferred types and type vars is correct
-            u_data(ttype, info.0.iter().map(|x| u_var(x)).collect())
+            let w = Type { name: Rc::clone(ttype), params: info.0.iter().map(|x| Type { name: Rc::clone(x), params: vec![] }).collect() };
+            type_to_term(&w, &type_vars)
         },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {
+        // TODO the types here might be set variables.  They need to be mapped back.
         Err(vec![ StaticError::ExprIllTyped { 
             expr: format!("{:?}", expr).into(), 
-            found_type: format!("{:?}", t).into(),
+            found_type: format!("{:?}", t).into(), 
             expected_type: format!("{:?}", expected_type).into(),
         }])
     }

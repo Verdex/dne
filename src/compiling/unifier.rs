@@ -39,7 +39,6 @@ impl Unify {
         }).collect()
     }
 
-// TODO occurs
     pub fn unify(&mut self, a : &Rc<Term>, b : &Rc<Term>) -> bool {
         let a = Rc::clone(a);
         let b = Rc::clone(b);
@@ -47,6 +46,7 @@ impl Unify {
             (Term::Data(a_name, _), Term::Data(b_name, _)) if a_name != b_name => false,
             (Term::Data(_, a_params), Term::Data(_, b_params)) => 
                 a_params.iter().zip(b_params.iter()).map(|(a, b)| self.unify(a, b)).all(|x| x),
+            (Term::Var(a), Term::Var(b)) if a == b => true,
             (Term::Var(a), Term::Var(b)) => {
                 let a = self.to_index(&a);
                 let b = self.to_index(&b);
@@ -60,6 +60,7 @@ impl Unify {
                     (Some(a), None) => { self.vars[b_index] = Vif::Value(a); true },
                 }
             },
+            (Term::Var(x), y) | (y, Term::Var(x)) if self.occurs(x, y) => false,
             (Term::Var(a), _) => {
                 let a = self.to_index(a);
                 let (a_index, a_value) = self.follow(a);
@@ -78,6 +79,19 @@ impl Unify {
                     Some(b) => self.unify(&a, &b),
                 }
             },
+        }
+    }
+
+    fn occurs(&self, a : &str, b : &Term) -> bool {
+        fn inner(a : &str, b : &Term) -> bool {
+            match b {
+                Term::Var(x) => a == &**x,
+                Term::Data(_, params) => params.iter().any(|x| inner(a, x)),
+            }
+        }
+        match b {
+            Term::Data(_, params) => params.iter().any(|x| inner(a, x)),
+            _ => { return false; },
         }
     }
 
@@ -110,6 +124,32 @@ mod test {
     fn var(x : &str) -> Rc<Term> { Term::Var(x.into()).into() }
     fn atom(x : &str) -> Rc<Term> { Term::Data(x.into(), vec![]).into() }
     fn rule(x : &str, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(x.into(), xs).into() }
+
+    #[test]
+    fn should_self_unify() {
+        let a = var("a"); 
+        let b = var("a"); 
+        let mut u = Unify::new();
+
+        let r = u.unify(&a, &b);
+        assert!(r);
+
+        let r = u.unify(&a, &b);
+        assert!(r);
+    }
+
+    #[test]
+    fn should_fail_occurs() {
+        let a = var("a"); 
+        let b = rule("b", vec![var("a")]); 
+        let mut u = Unify::new();
+
+        let r = u.unify(&a, &b);
+
+        let c = rule("b", vec![var("a")]);
+        let r = u.unify(&a, &c);
+        assert!(!r);
+    }
 
     #[test]
     fn should_link_free_vars() {

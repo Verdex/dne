@@ -21,6 +21,7 @@ pub enum StaticError {
     // TODO type names collide with function names (and/or builtins)
     
     // TODO FunStaticError { name: Rc<str>, error : FunStaticError },
+    UnknownStructField { field: Rc<str>, ttype: Rc<str> },
 }
 
 /*
@@ -153,6 +154,28 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
             let w = Type { name: Rc::clone(ttype), params: info.0.iter().map(|x| Type { name: Rc::clone(x), params: vec![] }).collect() };
             type_to_term(&w, &type_vars)
         },
+        Expr::StructCons { ttype, params } => {
+            let info = env.get_struct_info(&ttype)?;
+            let type_vars : HashMap<Rc<str>, Rc<str>> = HashMap::from_iter(info.0.iter().map(|x| (Rc::clone(x), checker.gensym())));
+
+            let fields : HashMap<Rc<str>, &Type> = HashMap::from_iter(info.1.iter().map(|(n, t)| (Rc::clone(n), t)));
+
+            let expr_types = {
+                let mut xs = vec![];
+                for (n, e) in params {
+                    let t = fields.get(n).ok_or(vec![StaticError::UnknownStructField { field: Rc::clone(n), ttype: Rc::clone(ttype) }])?;
+                    xs.push((e, t));
+                }
+                xs
+            };
+
+            check( expr_types.iter()
+                        .map(|(p, t)| check_expr(checker, env, p, &type_to_term(t, &type_vars)))
+                        .flat_map(|x| match x { Err(x) => x, _ => vec![] } ).collect() )?;
+
+            let w = Type { name: Rc::clone(ttype), params: info.0.iter().map(|x| Type { name: Rc::clone(x), params: vec![] }).collect() };
+            type_to_term(&w, &type_vars)
+        },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {
@@ -212,6 +235,13 @@ impl<'a> Env<'a> {
                 }
             },
             None => todo!(), 
+        }
+    }
+
+    pub fn get_struct_info(&self, ttype: &Rc<str>) -> Result<(&[Rc<str>], &[(Rc<str>, Type)]) ,Vec<StaticError>> {
+        match self.structs.get(ttype) {
+            Some(x) => Ok((&x.type_params[..], &x.fields[..])),
+            None => todo!(),
         }
     }
 }

@@ -291,6 +291,24 @@ mod test {
     use crate::parsing::dne_parser::*;
 
     #[test]
+    fn should_type_check_struct_and_enum() {
+        let x = r#"
+            struct X<T> { a : T, b : Int }
+            enum W<T> { R(X<T>) }
+
+            fun y<T>( x : T ) -> T { x }
+            fun x() -> W<Bool> { 
+                let h = W::R(X { a: y(true), b: 5 });
+
+                h
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
+
+    #[test]
     fn should_type_check_infer_data_and_infer_fun_with_inner_infer_data() {
         let x = r#"
             enum W<T> { R(T) }

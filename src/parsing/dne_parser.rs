@@ -404,14 +404,24 @@ fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, Parse
         Ok(Expr::CaseCons { ttype: name, case, params } )
     }
     else if input.check(|x| x.eq(&Token::LCurl))? {
-        let mut params = vec![];
-        while !input.check(|x| x.eq(&Token::RCurl))? {
+        if input.check(|x| x.eq(&Token::RCurl))? {
+            Ok(Expr::StructCons { ttype: name, params: vec![] })
+        }
+        else {
+            let mut params = vec![];
             let field = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::Colon))?;
             let expr = parse_expr(input)?;
             params.push((field, expr));
+            while !input.check(|x| x.eq(&Token::RCurl))? {
+                input.expect(|x| x.eq(&Token::Comma))?;
+                let field = expect_sym(input)?;
+                input.expect(|x| x.eq(&Token::Colon))?;
+                let expr = parse_expr(input)?;
+                params.push((field, expr));
+            }
+            Ok(Expr::StructCons { ttype: name, params })
         }
-        Ok(Expr::StructCons { ttype: name, params })
     }
     else {
         Ok(Expr::Var(name))

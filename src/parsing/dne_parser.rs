@@ -458,6 +458,30 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
     }
 }
 
+// empty_one_or_more
+// zom
+
+fn one_or_more<T>(
+    input : &mut Input, 
+    end : Token, 
+    item : fn(&mut Input) -> Result<T, ParseError>,
+    trail : bool) -> Result<Vec<T>, ParseError> {
+
+    let mut xs = vec![item(input)?];
+    loop { 
+        if input.check(|x| x.eq(&end))? {
+            return Ok(xs);
+        }
+        input.expect(|x| x.eq(&Token::Comma))?;
+        xs.push(item(input)?);
+        
+        // TODO ?
+        if trail && input.check(|x| x.eq(&Token::Comma))? {
+            input.expect(|x| x.eq(&end))?;    
+            return Ok(xs);
+        }
+    }
+}
 
 #[cfg(test)]
 mod test {

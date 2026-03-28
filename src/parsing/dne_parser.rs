@@ -464,31 +464,57 @@ fn expect_sym(input : &mut Input) -> Result<Rc<str>, ParseError> {
 fn one_or_more<T>(
     input : &mut Input, 
     end : Token, 
-    item : fn(&mut Input) -> Result<T, ParseError>,
+    item : impl Fn(&mut Input) -> Result<T, ParseError>,
     trail : bool) -> Result<Vec<T>, ParseError> {
 
     let mut xs = vec![item(input)?];
-    if trail && input.check(|x| x.eq(&Token::Comma))? {
-        input.expect(|x| x.eq(&end))?;    
-        return Ok(xs);
-    }
     loop { 
         if input.check(|x| x.eq(&end))? {
             return Ok(xs);
         }
         input.expect(|x| x.eq(&Token::Comma))?;
-        xs.push(item(input)?);
-        
-        if trail && input.check(|x| x.eq(&Token::Comma))? {
-            input.expect(|x| x.eq(&end))?;    
+        if trail && input.check(|x| x.eq(&end))? {
             return Ok(xs);
         }
+        xs.push(item(input)?);
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+    fn test_one_or_more(input : &str, trail : bool, success : bool) {
+        let input = dne::lex(input).unwrap();
+        let mut input = Input::new(input, ParseError::Eof, |s, e| ParseError::Fatal(s, e));
+        let out = one_or_more(&mut input, Token::RCurl, |x| x.expect(|x| x.eq(&Token::Let)), trail);
+        if success {
+            assert!(matches!(out, Ok(_)));
+        }
+        else {
+            assert!(matches!(out, Err(_)));
+        }
+    }
+
+    #[test]
+    fn should_handle_one_or_more() {
+        test_one_or_more("}", false, false);
+        test_one_or_more("let }", false, true);
+        test_one_or_more("let, let }", false, true);
+        test_one_or_more("let, let, let }", false, true);
+        test_one_or_more("let, let, let, }", false, false);
+        test_one_or_more("let, let,, let }", false, false);
+        test_one_or_more("}", true, false);
+        test_one_or_more("let }", true, true);
+        test_one_or_more("let, let }", true, true);
+        test_one_or_more("let, let, let }", true, true);
+        test_one_or_more("let, let, let, }", true, true);
+        test_one_or_more("let, let,, let }", true, false);
+        test_one_or_more("let, }", true, true);
+        test_one_or_more("let, let, }", true, true);
+        test_one_or_more("let, let, let, }", true, true);
+        test_one_or_more("let, let,, let, }", true, false);
+    }
 
     #[test]
     fn should_parse_top_level_type_defs() {

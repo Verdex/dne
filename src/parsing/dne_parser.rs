@@ -132,14 +132,7 @@ fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
 fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
     let name = expect_sym(input)?;
     let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
-        let mut ret = vec![expect_sym(input)?];
-        loop {
-            if input.check(|x| x.eq(&Token::RAngle))? {
-                break ret;
-            }
-            input.expect(|x| x.eq(&Token::Comma))?; 
-            ret.push(expect_sym(input)?);
-        }
+        one_or_more(input, Token::RAngle, expect_sym, false)?
     }
     else {
         vec![]
@@ -171,14 +164,7 @@ fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
 fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
     let name = expect_sym(input)?;
     let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
-        let mut ret = vec![expect_sym(input)?];
-        loop {
-            if input.check(|x| x.eq(&Token::RAngle))? {
-                break ret;
-            }
-            input.expect(|x| x.eq(&Token::Comma))?; 
-            ret.push(expect_sym(input)?);
-        }
+        one_or_more(input, Token::RAngle, expect_sym, false)?
     }
     else {
         vec![]
@@ -207,11 +193,7 @@ fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
 fn parse_enum_case(input : &mut Input) -> Result<EnumCase, ParseError> {
     let name = expect_sym(input)?;
     if input.check(|x| x.eq(&Token::LParen))? {
-        let mut params = vec![parse_type(input)?];
-        while !input.check(|x| x.eq(&Token::RParen))? {
-            input.expect(|x| x.eq(&Token::Comma))?;
-            params.push(parse_type(input)?);
-        }
+        let params = one_or_more(input, Token::RParen, parse_type, true)?;
         Ok(EnumCase { name, params })
     }
     else {
@@ -222,14 +204,7 @@ fn parse_enum_case(input : &mut Input) -> Result<EnumCase, ParseError> {
 fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
     let name = expect_sym(input)?;
     let type_params = if input.check(|x| x.eq(&Token::LAngle))? {
-        let mut ret = vec![expect_sym(input)?];
-        loop {
-            if input.check(|x| x.eq(&Token::RAngle))? {
-                break ret;
-            }
-            input.expect(|x| x.eq(&Token::Comma))?; 
-            ret.push(expect_sym(input)?);
-        }
+        one_or_more(input, Token::RAngle, expect_sym, false)?
     }
     else {
         vec![]
@@ -431,14 +406,7 @@ fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, Parse
 fn parse_type(input : &mut Input) -> Result<Type, ParseError> {
     let name = expect_sym(input)?; 
     let params = if input.check(|x| x.eq(&Token::LAngle))? {
-        let mut ret = vec![parse_type(input)?];
-        loop {
-            if input.check(|x| x.eq(&Token::RAngle))? {
-                break ret;
-            }
-            input.expect(|x| x.eq(&Token::Comma))?; 
-            ret.push(parse_type(input)?);
-        }
+        one_or_more(input, Token::RAngle, parse_type, false)?
     }
     else {
         vec![]

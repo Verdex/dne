@@ -468,6 +468,10 @@ fn one_or_more<T>(
     trail : bool) -> Result<Vec<T>, ParseError> {
 
     let mut xs = vec![item(input)?];
+    if trail && input.check(|x| x.eq(&Token::Comma))? {
+        input.expect(|x| x.eq(&end))?;    
+        return Ok(xs);
+    }
     loop { 
         if input.check(|x| x.eq(&end))? {
             return Ok(xs);
@@ -475,7 +479,6 @@ fn one_or_more<T>(
         input.expect(|x| x.eq(&Token::Comma))?;
         xs.push(item(input)?);
         
-        // TODO ?
         if trail && input.check(|x| x.eq(&Token::Comma))? {
             input.expect(|x| x.eq(&end))?;    
             return Ok(xs);

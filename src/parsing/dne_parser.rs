@@ -94,8 +94,8 @@ pub enum Expr {
     CaseCons { ttype : Rc<str>, case : Rc<str>, params : Vec<Expr> },
     StructCons { ttype : Rc<str>, params : Vec<(Rc<str>, Expr)> },
     Var(Rc<str>),
+    List(Vec<Expr>),
     // TODO
-    // list constructor
     // match
 }
 
@@ -274,7 +274,17 @@ fn parse_let(input : &mut Input) -> Result<Def, ParseError> {
 }
 
 fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
-    if let Token::Int(x) = input.peek()? {
+    if let Token::Symbol(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        parse_var_follow_on(input, x)
+    }
+    else if input.check(|x| x.eq(&Token::LSquare))? {
+        let items = zero_or_more(input, Token::RSquare, parse_expr, true)?;
+        Ok(Expr::List(items))
+        // TODO this will need follow on as well
+    }
+    else if let Token::Int(x) = input.peek()? {
         let x = *x;
         input.take()?;
         Ok(Expr::Lit(Lit::Int(x)))
@@ -293,11 +303,6 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let x = Rc::clone(x);
         input.take()?;
         Ok(Expr::Lit(Lit::String(x)))
-    }
-    else if let Token::Symbol(x) = input.peek()? {
-        let x = Rc::clone(x);
-        input.take()?;
-        parse_var_follow_on(input, x)
     }
     else {
         let (s, e) = input.current()?;

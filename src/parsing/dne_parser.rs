@@ -138,26 +138,12 @@ fn parse_struct(input : &mut Input) -> Result<Struct, ParseError> {
         vec![]
     };
     input.expect(|x| x.eq(&Token::LCurl))?;
-    let mut fields = vec![];
-    if !input.check(|x| x.eq(&Token::RCurl))? {
-        loop {
-            let field = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::Colon))?;
-            let ttype = parse_type(input)?;
-            fields.push((field, ttype));
-
-            if input.check(|x| x.eq(&Token::RCurl))? {
-                break;
-            }
-            else if input.check(|x| x.eq(&Token::Comma))? {
-                continue;
-            }
-            else {
-                let (s, e) = input.current()?;
-                return Err(ParseError::Fatal(s, e));
-            }
-        }
-    }
+    let fields = zero_or_more(input, Token::RCurl, |input| {
+        let field = expect_sym(input)?;
+        input.expect(|x| x.eq(&Token::Colon))?;
+        let ttype = parse_type(input)?;
+        Ok((field, ttype))
+    }, true)?;
     Ok(Struct { name, type_params, fields })
 }
 
@@ -170,23 +156,7 @@ fn parse_enum(input : &mut Input) -> Result<Enum, ParseError> {
         vec![]
     };
     input.expect(|x| x.eq(&Token::LCurl))?;
-    let mut cases = vec![];
-    if !input.check(|x| x.eq(&Token::RCurl))? {
-        loop {
-            cases.push(parse_enum_case(input)?);
-
-            if input.check(|x| x.eq(&Token::RCurl))? {
-                break;
-            }
-            else if input.check(|x| x.eq(&Token::Comma))? {
-                continue;
-            }
-            else {
-                let (s, e) = input.current()?;
-                return Err(ParseError::Fatal(s, e));
-            }
-        }
-    }
+    let cases = zero_or_more(input, Token::RCurl, parse_enum_case, true)?;
     Ok(Enum { name, type_params, cases })
 }
 
@@ -210,26 +180,12 @@ fn parse_fun(input : &mut Input) -> Result<Fun, ParseError> {
         vec![]
     };
     input.expect(|x| x.eq(&Token::LParen))?;
-    let mut params = vec![];
-    if !input.check(|x| x.eq(&Token::RParen))? {
-        loop {
-            let param = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::Colon))?;
-            let ttype = parse_type(input)?;
-            params.push((param, ttype));
-
-            if input.check(|x| x.eq(&Token::RParen))? {
-                break;
-            }
-            else if input.check(|x| x.eq(&Token::Comma))? {
-                continue;
-            }
-            else {
-                let (s, e) = input.current()?;
-                return Err(ParseError::Fatal(s, e));
-            }
-        }
-    }
+    let params = zero_or_more(input, Token::RParen, |input| {
+        let param = expect_sym(input)?;
+        input.expect(|x| x.eq(&Token::Colon))?;
+        let ttype = parse_type(input)?;
+        Ok((param, ttype))
+    }, false)?;
     input.expect(|x| x.eq(&Token::Arrow))?;
     let return_type = parse_type(input)?;
     input.expect(|x| x.eq(&Token::LCurl))?;
@@ -351,52 +307,28 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 
 fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, ParseError> {
     if input.check(|x| x.eq(&Token::LParen))? {
-        if input.check(|x| x.eq(&Token::RParen))? {
-            Ok(Expr::Call { name, params: vec![] } )
-        }
-        else {
-            let mut params = vec![parse_expr(input)?];
-            loop {
-                if input.check(|x| x.eq(&Token::RParen))? {
-                    break Ok(Expr::Call { name, params } );
-                }
-                input.expect(|x| x.eq(&Token::Comma))?;
-                params.push(parse_expr(input)?);
-            }
-        }
+        let params = zero_or_more(input, Token::RParen, parse_expr, false)?;
+        Ok(Expr::Call { name, params })
     }
     else if input.check(|x| x.eq(&Token::Colon))? {
-        let mut params = vec![];
         input.expect(|x| x.eq(&Token::Colon))?;
         let case = expect_sym(input)?;
-        if input.check(|x| x.eq(&Token::LParen))? {
-            params.push(parse_expr(input)?);
-            while !input.check(|x| x.eq(&Token::RParen))? {
-                input.expect(|x| x.eq(&Token::Comma))?;
-                params.push(parse_expr(input)?);
-            }
+        let params = if input.check(|x| x.eq(&Token::LParen))? {
+            one_or_more(input, Token::RParen, parse_expr, false)?
         }
+        else {
+            vec![]
+        };
         Ok(Expr::CaseCons { ttype: name, case, params } )
     }
     else if input.check(|x| x.eq(&Token::LCurl))? {
-        if input.check(|x| x.eq(&Token::RCurl))? {
-            Ok(Expr::StructCons { ttype: name, params: vec![] })
-        }
-        else {
-            let mut params = vec![];
+        let params = zero_or_more(input, Token::RCurl, |input| {
             let field = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::Colon))?;
             let expr = parse_expr(input)?;
-            params.push((field, expr));
-            while !input.check(|x| x.eq(&Token::RCurl))? {
-                input.expect(|x| x.eq(&Token::Comma))?;
-                let field = expect_sym(input)?;
-                input.expect(|x| x.eq(&Token::Colon))?;
-                let expr = parse_expr(input)?;
-                params.push((field, expr));
-            }
-            Ok(Expr::StructCons { ttype: name, params })
-        }
+            Ok((field, expr))
+        }, true)?;
+        Ok(Expr::StructCons { ttype: name, params })
     }
     else {
         Ok(Expr::Var(name))

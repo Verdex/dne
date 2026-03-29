@@ -177,9 +177,22 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
             type_to_term(&w, &type_vars)
         },
         Expr::List(exprs) if exprs.len() == 0 => {
-            let t : Rc<str> = "x".into();
+            let t = checker.gensym();
             let tv = HashMap::from([(Rc::clone(&t), checker.gensym())]);
             let w = Type { name: "List".into(), params: vec![Type { name: t, params: vec![] }] }; 
+            type_to_term(&w, &tv)
+        },
+        Expr::List(exprs) => {
+            let t = checker.gensym();
+            let tv = HashMap::from([(Rc::clone(&t), checker.gensym())]);
+            let t = Type { name: t, params: vec![] };
+
+            check( exprs.iter()
+                        .map(|x| check_expr(checker, env, x, &type_to_term(&t, &tv)))
+                        .flat_map(|x| match x { Err(x) => x, _ => vec![] } )
+                        .collect() )?;
+
+            let w = Type { name: "List".into(), params: vec![t] }; 
             type_to_term(&w, &tv)
         },
         _ => todo!(),
@@ -295,6 +308,21 @@ fn u_data(x : &Rc<str>, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(Rc::clone(x
 mod test {
     use super::*;
     use crate::parsing::dne_parser::*;
+
+    #[test]
+    fn should_type_check_list() {
+        let x = r#"
+            struct Z<T> { a : T }
+            fun id<T>(y:T) -> T { y }
+            fun x() -> List<Z<Int>> { 
+                let h = [id(Z { a: 1}), Z { a: 2 }, Z { a: 3 }];
+                h
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
 
     #[test]
     fn should_type_check_empty_list() {

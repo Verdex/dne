@@ -176,6 +176,12 @@ fn check_expr(checker : &mut Checker, env : &Env, expr : &Expr, expected_type : 
             let w = Type { name: Rc::clone(ttype), params: info.0.iter().map(|x| Type { name: Rc::clone(x), params: vec![] }).collect() };
             type_to_term(&w, &type_vars)
         },
+        Expr::List(exprs) if exprs.len() == 0 => {
+            let t : Rc<str> = "x".into();
+            let tv = HashMap::from([(Rc::clone(&t), checker.gensym())]);
+            let w = Type { name: "List".into(), params: vec![Type { name: t, params: vec![] }] }; 
+            type_to_term(&w, &tv)
+        },
         _ => todo!(),
     };
     if !checker.unify_types(&t, expected_type) {
@@ -289,6 +295,21 @@ fn u_data(x : &Rc<str>, xs : Vec<Rc<Term>>) -> Rc<Term> { Term::Data(Rc::clone(x
 mod test {
     use super::*;
     use crate::parsing::dne_parser::*;
+
+    #[test]
+    fn should_type_check_empty_list() {
+        let x = r#"
+            fun blarg<T>(a : List<T>, b : List<T>) -> List<T> { a }
+            fun x() -> List<Int> { 
+                let h = [];
+                let l : List<Int> = [];
+                blarg(h, l)
+            }
+        "#;
+        let y = parse(x).unwrap();
+        let z = static_check(&y, vec![]);
+        assert!(z.is_ok());
+    }
 
     #[test]
     fn should_type_check_struct_and_enum() {

@@ -91,7 +91,8 @@ pub enum Lit {
 pub enum MatchPattern {
     Wild,
     Var(Rc<str>),
-    // TODO list (and rest)
+    List(Vec<MatchPattern>, Box<MatchPattern>),
+    // TODO
     // struct (and don't care about that not mentioned)
     // enum case
 }

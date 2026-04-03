@@ -88,6 +88,21 @@ pub enum Lit {
 // Then get pattern, foreach_result, and pat_locals
 
 #[derive(Debug)]
+pub enum MatchPattern {
+    Wild,
+    Var(Rc<str>),
+    // TODO list (and rest)
+    // struct (and don't care about that not mentioned)
+    // enum case
+}
+
+#[derive(Debug)]
+pub struct MatchCase {
+    pat : MatchPattern,
+    expr : Expr,
+}
+
+#[derive(Debug)]
 pub enum Expr { 
     Lit(Lit), 
     Call { name : Rc<str>, params : Vec<Expr> },
@@ -95,8 +110,7 @@ pub enum Expr {
     StructCons { ttype : Rc<str>, params : Vec<(Rc<str>, Expr)> },
     Var(Rc<str>),
     List(Vec<Expr>),
-    // TODO
-    // match
+    Match(Box<Expr>, Vec<MatchCase>),
 }
 
 pub fn parse(input : &str) -> Result<Vec<Top>, ParseError> {

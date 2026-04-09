@@ -291,7 +291,17 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
 }
 
 fn parse_match_pattern(input : &mut Input) -> Result<MatchPattern, ParseError> {
-    todo!()
+    if false {
+        todo!()
+    }
+    else if let Token::Symbol(x) = input.peek()? && x.as_ref() == "_" {
+        input.take()?;
+        Ok(MatchPattern::Wild)
+    }
+    else {
+        let (s, e) = input.current()?;
+        Err(ParseError::Fatal(s, e))
+    }
 }
 
 fn parse_match_case(input : &mut Input) -> Result<MatchCase, ParseError> {
@@ -302,12 +312,14 @@ fn parse_match_case(input : &mut Input) -> Result<MatchCase, ParseError> {
     else { 
         None 
     };
+    input.expect(|x| x.eq(&Token::DArrow))?;
     let expr = parse_expr(input)?;
     Ok(MatchCase { pat, expr, pred })
 }
 
 fn parse_match(input : &mut Input) -> Result<Expr, ParseError> {
     let expr = parse_expr(input)?;
+    input.expect(|x| x.eq(&Token::With))?;
     input.expect(|x| x.eq(&Token::LCurl))?;
     let cases = zero_or_more(input, Token::RCurl, parse_match_case, true)?;
     Ok(Expr::Match(Box::new(expr), cases))
@@ -494,5 +506,22 @@ mod test {
 
         let output = parse(input).unwrap();
         assert_eq!(output.len(), 10);
+    }
+
+    #[test]
+    fn should_parse_match() {
+        let input = r#"
+            fun x() -> Int {
+                let y = 0;
+
+                match y with {
+                    _ if true => 1,
+                    _ => 1,
+                }
+            }
+        "#;
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
     }
 }

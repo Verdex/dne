@@ -100,6 +100,7 @@ pub enum MatchPattern {
 pub struct MatchCase {
     pat : MatchPattern,
     expr : Expr,
+    pred : Option<Expr>,
 }
 
 #[derive(Debug)]
@@ -255,6 +256,9 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         input.take()?;
         parse_var_follow_on(input, x)
     }
+    else if input.check(|x| x.eq(&Token::Match))? {
+        parse_match(input)
+    }
     else if input.check(|x| x.eq(&Token::LSquare))? {
         let items = zero_or_more(input, Token::RSquare, parse_expr, true)?;
         Ok(Expr::List(items))
@@ -284,6 +288,29 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
         let (s, e) = input.current()?;
         Err(ParseError::Fatal(s, e))
     }
+}
+
+fn parse_match_pattern(input : &mut Input) -> Result<MatchPattern, ParseError> {
+    todo!()
+}
+
+fn parse_match_case(input : &mut Input) -> Result<MatchCase, ParseError> {
+    let pat = parse_match_pattern(input)?;
+    let pred = if input.check(|x| x.eq(&Token::If))? {
+        Some(parse_expr(input)?)
+    }
+    else { 
+        None 
+    };
+    let expr = parse_expr(input)?;
+    Ok(MatchCase { pat, expr, pred })
+}
+
+fn parse_match(input : &mut Input) -> Result<Expr, ParseError> {
+    let expr = parse_expr(input)?;
+    input.expect(|x| x.eq(&Token::LCurl))?;
+    let cases = zero_or_more(input, Token::RCurl, parse_match_case, true)?;
+    Ok(Expr::Match(Box::new(expr), cases))
 }
 
 fn parse_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<Expr, ParseError> {

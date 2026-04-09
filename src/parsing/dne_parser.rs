@@ -223,48 +223,10 @@ fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Jump(r));
         }
-        else if input.check(|x| x.eq(&Token::BranchTrue))? {
-            let label = expect_sym(input)?;
-            let var = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::BranchTrue { label, var });
-        }
-        else if input.check(|x| x.eq(&Token::Return))? {
-            let r = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::Return(r));
-        }
         else if input.check(|x| x.eq(&Token::Yield))? {
             let r = expect_sym(input)?;
             input.expect(|x| x.eq(&Token::SemiColon))?;
             ret.push(Stmt::Yield(r));
-        }
-        else if input.check(|x| x.eq(&Token::Break))? {
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::Break);
-        }
-        else if input.check(|x| x.eq(&Token::Label))? {
-            let r = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::Label(r));
-        }
-        else if input.check(|x| x.eq(&Token::SlotInsert))? {
-            let var = expect_sym(input)?;
-            let var_input = expect_sym(input)?;
-            let index = expect_index(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::SlotInsert { var, input: var_input, index })
-        }
-        else if input.check(|x| x.eq(&Token::SlotRemove))? {
-            let var = expect_sym(input)?;
-            let index = expect_index(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::SlotRemove { var, index })
-        }
-        else if input.check(|x| x.eq(&Token::Delete))? {
-            let var = expect_sym(input)?;
-            input.expect(|x| x.eq(&Token::SemiColon))?;
-            ret.push(Stmt::Delete(var));
         }
     */
         else {

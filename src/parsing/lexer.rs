@@ -256,8 +256,14 @@ pub mod dne {
                     let s = *s;
                     input.next().unwrap();
                     match input.peek() {
-                        None => { return Ok(ret); },
-                        Some((e, '>')) => { ret.push((Token::DArrow, s, *e)); },
+                        None => { 
+                            ret.push((Token::Equal, s, s));
+                            return Ok(ret); 
+                        },
+                        Some((e, '>')) => { 
+                            ret.push((Token::DArrow, s, *e)); 
+                            input.next().unwrap(); 
+                        },
                         _ => { ret.push((Token::Equal, s, s)); },
                     }
                 },
@@ -285,6 +291,27 @@ pub mod dne {
         };
 
         Ok((r, l))
+    }
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        #[test]
+        fn should_lex_eq() {
+            let input = "=";
+            let output = lex(input).unwrap();
+            assert_eq!(output.len(), 1);
+            assert!(matches!(output[0].0, Token::Equal));
+        }
+
+        #[test]
+        fn should_lex_d_arrow() {
+            let input = "=>";
+            let output = lex(input).unwrap();
+            assert_eq!(output.len(), 1);
+            assert!(matches!(output[0].0, Token::DArrow));
+        }
     }
 }
 

@@ -91,10 +91,9 @@ pub enum Lit {
 pub enum MatchPattern {
     Wild,
     Var(Rc<str>),
-    List(Vec<MatchPattern>, Box<MatchPattern>),
-    // TODO
-    // struct (and don't care about that not mentioned)
-    // enum case
+    List(Vec<MatchPattern>, Box<MatchPattern>), 
+    Struct { fields: Vec<(Rc<str>, MatchPattern)>, total: bool },
+    Enum { ttype: Rc<str>, case: Rc<str>, params: Vec<MatchPattern> },
 }
 
 #[derive(Debug)]

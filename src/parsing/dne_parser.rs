@@ -92,7 +92,7 @@ pub enum MatchPattern {
     Wild,
     Var(Rc<str>),
     List(Vec<MatchPattern>, Box<MatchPattern>), 
-    Struct { fields: Vec<(Rc<str>, MatchPattern)>, total: bool },
+    Struct { ttype: Rc<str>, fields: Vec<(Rc<str>, MatchPattern)>, total: bool },
     Enum { ttype: Rc<str>, case: Rc<str>, params: Vec<MatchPattern> },
 }
 
@@ -290,13 +290,45 @@ fn parse_expr(input : &mut Input) -> Result<Expr, ParseError> {
     }
 }
 
+fn parse_pattern_var_follow_on(input : &mut Input, name : Rc<str>) -> Result<MatchPattern, ParseError> {
+    if input.check(|x| x.eq(&Token::Colon))? {
+        input.expect(|x| x.eq(&Token::Colon))?;
+        let case = expect_sym(input)?;
+        let params = if input.check(|x| x.eq(&Token::LParen))? {
+            one_or_more(input, Token::RParen, parse_match_pattern, false)?
+        }
+        else {
+            vec![]
+        };
+        Ok(MatchPattern::Enum { ttype: name, case, params } )
+    }
+    else if input.check(|x| x.eq(&Token::LCurl))? {
+        // TODO needs to also handle, ..
+        let fields = zero_or_more(input, Token::RCurl, |input| {
+            let field = expect_sym(input)?;
+            input.expect(|x| x.eq(&Token::Colon))?;
+            let pattern = parse_match_pattern(input)?;
+            Ok((field, pattern))
+        }, true)?;
+        Ok(MatchPattern::Struct { ttype: name, fields, total: true })
+    }
+    else {
+        Ok(MatchPattern::Var(name))
+    }
+}
+
 fn parse_match_pattern(input : &mut Input) -> Result<MatchPattern, ParseError> {
-    if false {
+    if input.check(|x| x.eq(&Token::LSquare))? {
         todo!()
     }
     else if let Token::Symbol(x) = input.peek()? && x.as_ref() == "_" {
         input.take()?;
         Ok(MatchPattern::Wild)
+    }
+    else if let Token::Symbol(x) = input.peek()? {
+        let x = Rc::clone(x);
+        input.take()?;
+        parse_pattern_var_follow_on(input, x)
     }
     else {
         let (s, e) = input.current()?;
@@ -511,17 +543,18 @@ mod test {
     #[test]
     fn should_parse_match() {
         let input = r#"
+            fun y() -> Bool { true }
             fun x() -> Int {
                 let y = 0;
 
                 match y with {
-                    _ if true => 1,
+                    _ if y() => 1,
                     _ => 1,
                 }
             }
         "#;
 
         let output = parse(input).unwrap();
-        assert_eq!(output.len(), 1);
+        assert_eq!(output.len(), 2);
     }
 }

@@ -1,5 +1,6 @@
 
 mod data;
+mod util;
 mod dne_parser;
 mod top_level;
 

@@ -2,6 +2,7 @@
 use crate::parsing::lexer::dne::Token;
 use super::data::*;
 use super::dne_parser::*;
+use super::util::*;
 
 pub fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
     let mut ret = vec![];
@@ -115,3 +116,29 @@ fn parse_defs(input : &mut Input) -> Result<Vec<Def>, ParseError> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::parsing::dne_parser::parse;
+    use crate::parsing::lexer::dne::lex;
+
+    #[test]
+    fn should_parse_top_level_type_defs() {
+        let input = r#"
+            struct X { }
+            struct Y { a : Int }
+            struct Z<T> { a : T }
+            struct W<T, S> { a : T, b : S }
+
+            enum A { }
+            enum B { L }
+            enum C { L, M }
+            enum D { L(Int), M, N(Int, Float) }
+            enum E<T> { L(T) }
+            enum E<T, S> { L(T, S) }
+        "#;
+
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 10);
+    }
+}

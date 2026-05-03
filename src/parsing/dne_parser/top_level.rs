@@ -1,7 +1,7 @@
 
 use crate::parsing::lexer::dne::Token;
 use super::data::*;
-use super::dne_parser::*;
+use super::expr::*;
 use super::util::*;
 
 pub fn parse_tops(input : &mut Input) -> Result<Vec<Top>, ParseError> {
